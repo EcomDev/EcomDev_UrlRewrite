@@ -1637,13 +1637,15 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     {
         $this
             ->_generateTransliterateData()
+            ->beginTransaction()
             ->clearInvalidRewrites()
             ->_importFromRewrite()
             ->_generateCategoryRequestPathIndex()
             ->_generateProductRequestPathIndex()
             ->_importFromCategoryRequestPath()
             ->_importFromProductRequestPath()
-            ->_updateRewrites();
+            ->_updateRewrites()
+            ->commit();
     }
     
     /**
@@ -1656,12 +1658,14 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     {
         $this
             ->_generateTransliterateData(true)
+            ->beginTransaction()
             ->_importFromRewrite()
             ->_generateCategoryRequestPathIndex($cateoryIds)
             ->_generateProductRequestPathIndex($cateoryIds)
             ->_importFromCategoryRequestPath()
             ->_importFromProductRequestPath()
-            ->_updateRewrites();
+            ->_updateRewrites()
+            ->commit();
         return $this;
     }
     
@@ -1677,10 +1681,12 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     {
         $this
             ->_generateTransliterateData(true)
+            ->beginTransaction()
             ->_importFromRewrite()
             ->_generateProductRequestPathIndex($categoryIds, $productIds)
             ->_importFromProductRequestPath()
-            ->_updateRewrites();
+            ->_updateRewrites()
+            ->commit();
         return $this;
     }
     
