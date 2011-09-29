@@ -1,0 +1,19 @@
+-
+  - full_reindex
+  - [21001, 22101, 22111, 22201, 31001, 31002]
+  - null
+  - null
+-
+  - single_id
+  - 21001
+  - null
+-
+  - partial_reindex_by_category_ids
+  - [21001, 22101, 22111, 22201, 31001, 31002]
+  - [21, 22] # reindex only books
+  - null
+-
+  - partial_reindex_by_product_ids
+  - [21001, 22101, 22111, 22201, 31001, 31002]
+  - null
+  - [21001, 22101] # Reindex only 2 products

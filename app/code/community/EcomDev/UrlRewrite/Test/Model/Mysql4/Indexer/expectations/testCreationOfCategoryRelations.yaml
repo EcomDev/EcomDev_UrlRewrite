@@ -1,0 +1,22 @@
+full_reindex_nested: # Should return all child relations for categories
+  result:
+    22: [221, 222, 2211]
+    221: [2211]
+    30: [31, 32]
+full_reindex_nested_single_id: # Should return all child relations for category specified in dataprovider
+  result:
+    22: [221, 222, 2211]
+full_reindex_anchor: # Should return only relations for categories that are anchors
+  result:
+    221: [2211]
+    30: [31, 32]
+full_reindex_anchor_single_id: # Should return only relations for categories that are anchors
+  result:
+    221: [2211]
+partial_reindex_nested: # Shoudl return only generated relations for books
+  result:
+    22: [221, 222, 2211]
+    221: [2211]
+partial_reindex_anchor: # Shoudl return only generated relations for books and that are anchors
+  result:
+    221: [2211]

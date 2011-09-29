@@ -1,0 +1,30 @@
+-
+  - full_reindex_nested
+  - [21, 22, 221, 2211, 222, 30, 31, 32]
+  - nested
+  - null
+-
+  - full_reindex_nested_single_id
+  - 22
+  - nested
+  - null
+-
+  - full_reindex_anchor
+  - [21, 22, 221, 2211, 222, 30, 31, 32]
+  - anchor
+  - null
+-
+  - full_reindex_anchor_single_id
+  - 221
+  - anchor
+  - null
+- 
+  - partial_reindex_nested
+  - [21, 22, 221, 2211, 222, 30, 31, 32]
+  - nested
+  - [2] # reindex only books
+- 
+  - partial_reindex_anchor
+  - [21, 22, 221, 2211, 222, 30, 31, 32]
+  - anchor
+  - [2, 22] # reindex only books

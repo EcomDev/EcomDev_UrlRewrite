@@ -1,0 +1,29 @@
+tables: # Pregenerated category relation index for data fixture
+  ecomdev_urlrewrite/category_relation:
+    - category_id: 22
+      related_id: 221
+      type: "nested"
+    - category_id: 22
+      related_id: 222
+      type: "nested"
+    - category_id: 22
+      related_id: 2211
+      type: "nested"
+    - category_id: 30
+      related_id: 31
+      type: "anchor"
+    - category_id: 30
+      related_id: 31
+      type: "nested"
+    - category_id: 30
+      related_id: 32
+      type: "anchor"
+    - category_id: 30
+      related_id: 32
+      type: "nested"
+    - category_id: 221
+      related_id: 2211
+      type: "anchor"
+    - category_id: 221
+      related_id: 2211
+      type: "nested"

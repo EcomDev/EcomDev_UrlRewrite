@@ -1,0 +1,12 @@
+-
+  - full_reindex
+  - [21, 22, 221, 2211, 222, 30, 31, 32]
+  - null
+-
+  - full_reindex_single_id
+  - 221
+  - null
+-
+  - partial_reindex
+  - [21, 22, 221, 2211, 222, 30, 31, 32]
+  - [21, 22] # reindex only books

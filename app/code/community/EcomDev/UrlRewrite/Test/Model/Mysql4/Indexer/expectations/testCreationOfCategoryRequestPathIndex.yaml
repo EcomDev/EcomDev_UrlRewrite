@@ -1,0 +1,75 @@
+full_reindex: # Should return all request paths for all categories
+  result:
+    21: 
+      1: comedy       # Default store 
+      21: comedy      # English 
+      22: komodie     # German
+      23: komedija    # Ukrainian
+    22: 
+      1: sci-fi
+      21: sci-fi 
+      22: sci-fi
+      23: fantastyka
+    30:
+      31: advanced
+      32: advanced
+      33: advanced
+    31:
+      31: advanced/url-rewrites
+      32: advanced/url-rewrites
+      33: advanced/url-rewrites
+    32:
+      31: advanced/url-rewrites
+      32: advanced/url-rewrites
+      33: advanced/url-rewrites
+    221: 
+      1: sci-fi/aliens 
+      21: sci-fi/aliens 
+      22: sci-fi/aliens
+      23: fantastyka/pribul-ci # Magento has priority on translation of Russion
+                               # characters before translating Ukrainian characters, 
+                               # so Ukrainian "и" is translated as "i" instead of "y"
+    2211: 
+      1: sci-fi/aliens/humanoids 
+      21: sci-fi/aliens/humanoids 
+      22: sci-fi/aliens/humanoide
+      23: fantastyka/pribul-ci/gumanoidi
+    222:
+      1: sci-fi/time-travels
+      21: sci-fi/time-travels
+      22: sci-fi/zeitreisen
+      23: fantastyka/podorozhi-u-chasi
+full_reindex_single_id: # Should return only url path for specified category
+  result:
+    221: 
+      1: sci-fi/aliens          # Default 
+      21: sci-fi/aliens         # English 
+      22: sci-fi/aliens         # German 
+      23: fantastyka/pribul-ci   # Ukrainian
+partial_reindex: # Should return only request paths for books
+  result:
+    21: 
+      1: comedy                # Default 
+      21: comedy               # English 
+      22: komodie              # German
+      23: komedija             # Ukrainian
+    22: 
+      1: sci-fi
+      21: sci-fi
+      22: sci-fi
+      23: fantastyka
+    221: 
+      1: sci-fi/aliens 
+      21: sci-fi/aliens 
+      22: sci-fi/aliens
+      23: fantastyka/pribul-ci
+    2211: 
+      1: sci-fi/aliens/humanoids 
+      21: sci-fi/aliens/humanoids 
+      22: sci-fi/aliens/humanoide
+      23: fantastyka/pribul-ci/gumanoidi
+    222:
+      1: sci-fi/time-travels
+      21: sci-fi/time-travels
+      22: sci-fi/zeitreisen
+      23: fantastyka/podorozhi-u-chasi

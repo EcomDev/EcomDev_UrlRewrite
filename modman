@@ -1,0 +1,3 @@
+# Alternative Url Rewrites extension
+app/code/community/EcomDev/UrlRewrite                                  app/code/community/EcomDev/UrlRewrite
+app/etc/modules/EcomDev_UrlRewrite.xml                                 app/etc/modules/EcomDev_UrlRewrite.xml

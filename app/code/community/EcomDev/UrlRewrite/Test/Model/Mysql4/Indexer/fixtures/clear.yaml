@@ -1,0 +1,7 @@
+tables:
+  core/url_rewrite: []
+  ecomdev_urlrewrite/product_request_path: []
+  ecomdev_urlrewrite/category_request_path: []
+  ecomdev_urlrewrite/category_relation: []
+  ecomdev_urlrewrite/rewrite: []
+  ecomdev_urlrewrite/duplicate: []

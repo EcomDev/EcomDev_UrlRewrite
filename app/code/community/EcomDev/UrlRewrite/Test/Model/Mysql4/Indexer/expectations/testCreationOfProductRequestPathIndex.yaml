@@ -1,0 +1,165 @@
+full_reindex:
+  result:
+    21001:
+      # Store level
+      21:
+        # Category Level
+        0: viktor-yanukovych-autobiography
+        21: comedy/viktor-yanukovych-autobiography
+      22:
+        0: viktor-yanukovych-autobiography
+        21: komodie/viktor-yanukovych-autobiography
+      23:
+        0: viktor-yanukovych-autobiography
+        21: komedija/viktor-yanukovych-autobiography
+    22101:
+      21:
+        0: herbert-george-wells-the-war-of-the-worlds
+        221: sci-fi/aliens/herbert-george-wells-the-war-of-the-worlds
+      22:
+        0: herbert-george-wells-the-war-of-the-worlds
+        221: sci-fi/aliens/herbert-george-wells-the-war-of-the-worlds
+      23:
+        0: gerbert-dzhordzh-uells-vijna-svitiv
+        221: fantastyka/pribul-ci/gerbert-dzhordzh-uells-vijna-svitiv
+    22111:
+      21:
+        0: jack-williamson-the-humanoids-a-novel
+        221: sci-fi/aliens/jack-williamson-the-humanoids-a-novel # Anchor should have a rewrite as well
+        2211: sci-fi/aliens/humanoids/jack-williamson-the-humanoids-a-novel
+      22:
+        0: jack-williamson-the-humanoids-a-novel
+        221: sci-fi/aliens/jack-williamson-the-humanoids-a-novel 
+        2211: sci-fi/aliens/humanoide/jack-williamson-the-humanoids-a-novel
+      23:
+        0: jack-williamson-the-humanoids-a-novel
+        221: fantastyka/pribul-ci/jack-williamson-the-humanoids-a-novel 
+        2211: fantastyka/pribul-ci/gumanoidi/jack-williamson-the-humanoids-a-novel
+    22201:
+      21:
+        0: wells-h-g-1898-the-time-machine
+        222: sci-fi/time-travels/wells-h-g-1898-the-time-machine
+      22:
+        0: wells-h-g-1898-the-time-machine
+        222: sci-fi/zeitreisen/wells-h-g-1898-the-time-machine
+      23:
+        0: gerbert-dzhordzh-uells-mashina-chasu
+        222: fantastyka/podorozhi-u-chasi/gerbert-dzhordzh-uells-mashina-chasu
+    # Duplicated keys for these products shouldn't be resolved at step of path generation
+    31001:
+      31:
+        0: extension
+        30: advanced/extension
+        31: advanced/url-rewrites/extension
+        32: advanced/url-rewrites/extension
+      32:
+        0: extension
+        30: advanced/extension
+        31: advanced/url-rewrites/extension
+        32: advanced/url-rewrites/extension
+      33:
+        0: extension
+        30: advanced/extension
+        31: advanced/url-rewrites/extension
+        32: advanced/url-rewrites/extension
+    31002:
+      31:
+        0: extension
+        30: advanced/extension
+        31: advanced/url-rewrites/extension
+        32: advanced/url-rewrites/extension
+      32:
+        0: extension
+        30: advanced/extension
+        31: advanced/url-rewrites/extension
+        32: advanced/url-rewrites/extension
+      33:
+        0: extension
+        30: advanced/extension
+        31: advanced/url-rewrites/extension
+        32: advanced/url-rewrites/extension
+single_id:
+  result:
+    21001:
+      # Store level
+      21:
+        # Category Level
+        0: viktor-yanukovych-autobiography
+        21: comedy/viktor-yanukovych-autobiography
+      22:
+        0: viktor-yanukovych-autobiography
+        21: komodie/viktor-yanukovych-autobiography
+      23:
+        0: viktor-yanukovych-autobiography
+        21: komedija/viktor-yanukovych-autobiography
+partial_reindex_by_category_ids:
+  result:
+    21001:
+      # Store level
+      21:
+        # Category Level
+        0: viktor-yanukovych-autobiography
+        21: comedy/viktor-yanukovych-autobiography
+      22:
+        0: viktor-yanukovych-autobiography
+        21: komodie/viktor-yanukovych-autobiography
+      23:
+        0: viktor-yanukovych-autobiography
+        21: komedija/viktor-yanukovych-autobiography
+    22101:
+      21:
+        0: herbert-george-wells-the-war-of-the-worlds
+        221: sci-fi/aliens/herbert-george-wells-the-war-of-the-worlds
+      22:
+        0: herbert-george-wells-the-war-of-the-worlds
+        221: sci-fi/aliens/herbert-george-wells-the-war-of-the-worlds
+      23:
+        0: gerbert-dzhordzh-uells-vijna-svitiv
+        221: fantastyka/pribul-ci/gerbert-dzhordzh-uells-vijna-svitiv
+    22111:
+      21:
+        0: jack-williamson-the-humanoids-a-novel
+        221: sci-fi/aliens/jack-williamson-the-humanoids-a-novel # Anchor should have a rewrite as well
+        2211: sci-fi/aliens/humanoids/jack-williamson-the-humanoids-a-novel
+      22:
+        0: jack-williamson-the-humanoids-a-novel
+        221: sci-fi/aliens/jack-williamson-the-humanoids-a-novel 
+        2211: sci-fi/aliens/humanoide/jack-williamson-the-humanoids-a-novel
+      23:
+        0: jack-williamson-the-humanoids-a-novel
+        221: fantastyka/pribul-ci/jack-williamson-the-humanoids-a-novel 
+        2211: fantastyka/pribul-ci/gumanoidi/jack-williamson-the-humanoids-a-novel
+    22201:
+      21:
+        0: wells-h-g-1898-the-time-machine
+        222: sci-fi/time-travels/wells-h-g-1898-the-time-machine
+      22:
+        0: wells-h-g-1898-the-time-machine
+        222: sci-fi/zeitreisen/wells-h-g-1898-the-time-machine
+      23:
+        0: gerbert-dzhordzh-uells-mashina-chasu
+        222: fantastyka/podorozhi-u-chasi/gerbert-dzhordzh-uells-mashina-chasu
+partial_reindex_by_product_ids: # It should return only reindexed products
+  result:
+    21001:
+      # Store level
+      21:
+        # Category Level
+        0: viktor-yanukovych-autobiography
+        21: comedy/viktor-yanukovych-autobiography
+      22:
+        0: viktor-yanukovych-autobiography
+        21: komodie/viktor-yanukovych-autobiography
+      23:
+        0: viktor-yanukovych-autobiography
+        21: komedija/viktor-yanukovych-autobiography
+    22101:
+      21:
+        0: herbert-george-wells-the-war-of-the-worlds
+        221: sci-fi/aliens/herbert-george-wells-the-war-of-the-worlds
+      22:
+        0: herbert-george-wells-the-war-of-the-worlds
+        221: sci-fi/aliens/herbert-george-wells-the-war-of-the-worlds
+      23:
+        0: gerbert-dzhordzh-uells-vijna-svitiv
+        221: fantastyka/pribul-ci/gerbert-dzhordzh-uells-vijna-svitiv

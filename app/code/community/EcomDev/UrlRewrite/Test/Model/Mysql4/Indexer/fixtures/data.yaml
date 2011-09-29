@@ -1,0 +1,299 @@
+# Fixture that contains all required data for url rewrites test 
+# on different categories, product with different languages
+scope:
+  website: # Initialize websites
+    - website_id: 2
+      code: books
+      name: Books Website
+      default_group_id: 2
+    - website_id: 3
+      code: extensions
+      name: Extensions Website
+      default_group_id: 3
+  group: # Initializes store groups
+    - group_id: 2
+      website_id: 2
+      name: Books Store
+      default_store_id: 1
+      root_category_id: 2 # Books Store
+    - group_id: 3
+      website_id: 3
+      name: Extensions Store
+      default_store_id: 31
+      root_category_id: 3 # Extensions Store
+  store: # Initializes store views
+    - store_id: 21 # English language for Books Website
+      website_id: 2
+      group_id: 2
+      code: books_eng
+      name: English
+      is_active: 1
+    - store_id: 22 # German language for Books Website
+      website_id: 2
+      group_id: 2
+      code: books_deu
+      name: German
+      is_active: 1
+    - store_id: 23 # Ukrainian language for Books Website
+      website_id: 2
+      group_id: 2
+      code: books_ukr
+      name: Ukrainian
+      is_active: 1
+    - store_id: 31 # English language for Extensions Website
+      website_id: 3
+      group_id: 3
+      code: extensions_eng
+      name: English
+      is_active: 1
+    - store_id: 32 # German language for Extensions Website
+      website_id: 3
+      group_id: 3
+      code: extensions_deu
+      name: German
+      is_active: 1
+    - store_id: 33 # Ukrainian language for Extensions Website
+      website_id: 3
+      group_id: 3
+      code: extensions_ukr
+      name: Ukrainian
+      is_active: 1
+eav:
+  catalog_category:
+    - entity_id: 1 # Root category
+      attribute_set_id: 0
+      path: 1
+      name: Root
+      level: 0
+      children_count: 3
+      is_active: 1
+    - entity_id: 2 # Books Store category
+      parent_id: 1
+      path: 1/2
+      name: Books Store
+      level: 1
+      children_count: 2
+      is_active: 1
+# Books Store categories
+    - entity_id: 21
+      parent_id: 2
+      path: 1/2/21
+      name: Comedy
+      level: 2
+      children_count: 0
+      is_active: 1
+      /stores:
+        books_deu:
+          name: Komödie
+        books_ukr:
+          name: Комедія
+    - entity_id: 22
+      parent_id: 2
+      path: 1/2/22
+      name: Science-Fiction
+      url_key: sci-fi
+      level: 2
+      children_count: 2
+      is_active: 1
+      /stores:
+        books_ukr:
+          name: Фантастика
+          url_key: fantastyka
+    - entity_id: 221
+      parent_id: 22
+      path: 1/2/22/221
+      name: Aliens
+      level: 3
+      is_anchor: 1
+      children_count: 1
+      is_active: 1
+      /stores:
+        books_ukr:
+          name: Прибульці
+    - entity_id: 2211
+      parent_id: 221
+      path: 1/2/22/221/2211
+      name: Humanoids
+      level: 4
+      children_count: 0
+      /stores:
+        books_deu:
+          name: Humanoide
+        books_ukr:
+          name: Гуманоїди
+    - entity_id: 222
+      parent_id: 22
+      path: 1/2/22/222
+      name: Time Travels
+      level: 3
+      children_count: 0
+      is_active: 1
+      /stores:
+        books_deu:
+          name: Zeitreisen
+        books_ukr:
+          name: Подорожі у часі
+    - entity_id: 3 # Extension Store category
+      parent_id: 1
+      path: 1/3
+      name: Extension Store
+      level: 1
+      children_count: 1
+      is_active: 1
+ # Extension Store categories
+    - entity_id: 30
+      parent_id: 3
+      path: 1/3/30
+      name: Advanced
+      level: 2
+      children_count: 2
+      is_active: 1
+      is_anchor: 1
+    - entity_id: 31
+      parent_id: 30
+      path: 1/3/30/31
+      name: Url Rewrites
+      level: 3
+      children_count: 0
+      is_active: 1
+    - entity_id: 32
+      parent_id: 30
+      path: 1/3/30/31
+      name: Url Rewrites Duplicate Key
+      url_key: url-rewrites
+      level: 3
+      children_count: 0
+      is_active: 1
+  catalog_product:
+    - entity_id: 21001 # First part of id is related to base category
+      type_id: simple
+      sku: yanukovych-0001
+      name: "Viktor Yanukovych: Autobiography"
+      short_description: "Viktor Yanukovych: Autobiography"
+      description: "Viktor Yanukovych: Autobiography"
+      stock:
+        qty: 100000000.00
+        is_in_stock: 1
+      website_ids:
+        - books
+      category_ids:
+        - 21 # Comedy
+      price: 0.99
+      tax_class_id: 2 # Taxable Goods
+      status: 1             # Enabled
+      visibility: 4         # Visible in Catalog & Search
+    - entity_id: 22101
+      type_id: simple
+      sku: wells-0001
+      name: "Herbert George Wells: The War of the Worlds"
+      short_description: "Herbert George Wells: The War of the Worlds"
+      description: "Herbert George Wells: The War of the Worlds"
+      stock:
+        qty: 100000000.00
+        is_in_stock: 1
+      website_ids:
+        - books
+      category_ids:
+        - 221 # Aliens
+      price: 0.99
+      tax_class_id: 2 # Taxable Goods
+      status: 1             # Enabled
+      visibility: 4         # Visible in Catalog & Search
+      /stores:
+        books_ukr:
+          name: "Герберт Джордж Уеллс: Війна світів"
+          short_description: "Герберт Джордж Уеллс: Війна світів"
+          description: "Герберт Джордж Уеллс: Війна світів"
+    - entity_id: 22111
+      type_id: simple
+      sku: williamson-0001
+      name: "Jack Williamson: The Humanoids: A Novel"
+      short_description: "Jack Williamson: The Humanoids: A Novel"
+      description: "Jack Williamson: The Humanoids: A Novel"
+      stock:
+        qty: 100000000.00
+        is_in_stock: 1
+      website_ids:
+        - books
+      category_ids:
+        - 2211 # Aliens -> Humanoids
+      price: 0.99
+      tax_class_id: 2 # Taxable Goods
+      status: 1             # Enabled
+      visibility: 4         # Visible in Catalog & Search
+    - entity_id: 22201
+      type_id: simple
+      sku: wells-0002
+      name: "Wells, H.G. 1898. The Time Machine"
+      short_description: "Wells, H.G. 1898. The Time Machine"
+      description: "Wells, H.G. 1898. The Time Machine"
+      stock:
+        qty: 100000000.00
+        is_in_stock: 1
+      website_ids:
+        - books
+      category_ids:
+        - 222         # Time travels
+      price: 0.99
+      tax_class_id: 2 # Taxable Goods
+      status: 1             # Enabled
+      visibility: 4         # Visible in Catalog & Search
+      /stores:
+        books_ukr:
+          name: "Герберт Джордж Уеллс: Машина часу"
+          short_description: "Герберт Джордж Уеллс: Машина часу"
+          description: "Герберт Джордж Уеллс: Машина часу"
+    - entity_id: 31001
+      type_id: simple
+      sku: extension-0001
+      name: Extension
+      short_description: Extension
+      description: Extension
+      stock:
+        qty: 100000000.00
+        is_in_stock: 1
+      website_ids:
+        - extensions
+      category_ids:
+        - 31 # Url Rewrites
+        - 32 # Url Rewrites 2
+      price: 0.99
+      tax_class_id: 2 # Taxable Goods
+      status: 1             # Enabled
+      visibility: 4         # Visible in Catalog & Search
+    - entity_id: 31002 # Duplicate keys test case
+      type_id: simple
+      sku: extension-0002
+      name: Extension
+      short_description: Extension
+      description: Extension
+      stock:
+        qty: 100000000.00
+        is_in_stock: 1
+      website_ids:
+        - extensions
+      category_ids:
+        - 31 # Url Rewrites
+        - 32 # Url Rewrites 2
+      price: 0.99
+      tax_class_id: 2 # Taxable Goods
+      status: 1             # Enabled
+      visibility: 4         # Visible in Catalog & Search
+    - entity_id: 31003 # Special test case with numbers in the end
+      type_id: simple
+      sku: extension-0003
+      name: Extension
+      short_description: Extension
+      description: Extension
+      stock:
+        qty: 100000000.00
+        is_in_stock: 1
+      website_ids:
+        - extensions
+      category_ids:
+        - 31 # Url Rewrites
+        - 32 # Url Rewrites 2
+      price: 0.99
+      tax_class_id: 2 # Taxable Goods
+      status: 1             # Enabled
+      visibility: 4         # Visible in Catalog & Search
