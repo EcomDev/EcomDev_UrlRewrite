@@ -195,6 +195,5 @@ class EcomDev_UrlRewrite_Test_Model_Mysql4_Indexer extends EcomDev_PHPUnit_Test_
         );
         return $this;
     }
-    
-    
+
 }

@@ -3,7 +3,7 @@ tables:
   ecomdev_urlrewrite/root_category: []
   ecomdev_urlrewrite/product_url_key: []
   ecomdev_urlrewrite/product_request_path: []
-  #ecomdev_urlrewrite/category_url_key: []
+  ecomdev_urlrewrite/category_url_key: []
   ecomdev_urlrewrite/category_request_path: []
   ecomdev_urlrewrite/category_relation: []
   ecomdev_urlrewrite/rewrite: []
