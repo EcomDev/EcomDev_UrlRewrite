@@ -1,0 +1,16 @@
+tables:
+  ecomdev_urlrewrite/root_category:
+    - store_id: 1
+      path: 1/2/%
+    - store_id: 21
+      path: 1/2/%
+    - store_id: 22
+      path: 1/2/%
+    - store_id: 23
+      path: 1/2/%
+    - store_id: 31
+      path: 1/3/%
+    - store_id: 32
+      path: 1/3/%
+    - store_id: 33
+      path: 1/3/%

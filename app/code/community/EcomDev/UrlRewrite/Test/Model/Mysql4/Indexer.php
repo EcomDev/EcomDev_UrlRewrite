@@ -58,6 +58,30 @@ class EcomDev_UrlRewrite_Test_Model_Mysql4_Indexer extends EcomDev_PHPUnit_Test_
     }
     
     /**
+     * Test for generation of root category index data 
+     * 
+     * @loadFixture clear
+     * @covers EcomDev_UrlRewrite_Model_Mysql4_Indexer::_generateRootCategoryIndex
+     * @covers EcomDev_UrlRewrite_Model_Mysql4_Indexer::getRootCatgories
+     */
+    public function testCreationOfRootCategory()
+    {
+        // Generate index
+        EcomDev_Utils_Reflection::invokeRestrictedMethod(
+            $this->resourceModel, 
+            '_generateRootCategoryIndex'
+        );
+        
+        $result = $this->resourceModel->getRootCategories();
+        $this->assertEquals(
+            $this->expected()->getResult(), 
+            $result
+        );
+        
+        return $this;
+    }
+    
+    /**
      * Test for generation of category relation index data 
      * 
      * @param string $dataSet for expectation
@@ -96,6 +120,7 @@ class EcomDev_UrlRewrite_Test_Model_Mysql4_Indexer extends EcomDev_PHPUnit_Test_
      * @param array|null $reindexCategoryIds if null reindex all data
      * 
      * @loadFixture clear
+     * @loadFixture rootCategoryIndex
      * @dataProvider dataProvider
      * @covers EcomDev_UrlRewrite_Model_Mysql4_Indexer::_generateCategoryRelationIndex
      * @covers EcomDev_UrlRewrite_Model_Mysql4_Indexer::getCategoryRequestPathIndex
@@ -138,6 +163,7 @@ class EcomDev_UrlRewrite_Test_Model_Mysql4_Indexer extends EcomDev_PHPUnit_Test_
      * @param array|null $reindexProductIds
      * 
      * @loadFixture clear
+     * @loadFixture rootCategoryIndex
      * @loadFixture categoryRelationIndex
      * @loadFixture categoryRequestPathIndex
      * @dataProvider dataProvider

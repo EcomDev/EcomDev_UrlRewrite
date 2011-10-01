@@ -51,7 +51,7 @@ $table
     )
     ->addColumn(
         'updated', Varien_Db_Ddl_Table::TYPE_TINYINT, 1,
-        array('unsigned' => true, 'default' => 1)
+        array('unsigned' => true, 'nullable' => false, 'default' => 1)
     )
     ->addIndex(
         'IDX_STORE_CATEGORY', array('store_id', 'category_id')
@@ -75,29 +75,6 @@ $table
         $this->getTable('catalog/category'), 
         'entity_id',
         Varien_Db_Ddl_Table::ACTION_CASCADE
-    )
-    ->setOption('collate', null);
-
-$this->getConnection()->createTable($table);
-
-// Temporary table for category path generation
-$table = $this->getConnection()->newTable(
-    $this->getTable('ecomdev_urlrewrite/category_request_path_tmp')
-);
-
-// Category request path index table
-$table
-    ->addColumn(
-        'store_id', Varien_Db_Ddl_Table::TYPE_SMALLINT, null,
-        array('unsigned' => true, 'nullable' => false, 'primary' => true)
-    )
-    ->addColumn(
-        'id_path', Varien_Db_Ddl_Table::TYPE_CHAR, 32, 
-        array('nullable' => false, 'primary' => true)
-    )
-    ->addColumn(
-        'request_path', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
-        array('nullable' => false)
     )
     ->setOption('collate', null);
 
@@ -135,7 +112,7 @@ $table
     )
     ->addColumn(
         'updated', Varien_Db_Ddl_Table::TYPE_TINYINT, 1,
-        array('unsigned' => true, 'default' => 1)
+        array('unsigned' => true, 'nullable' => false, 'default' => 1)
     )
     ->addIndex(
         'IDX_CATEGORY', 
@@ -222,7 +199,7 @@ $table
     )
     ->addColumn(
         'updated', Varien_Db_Ddl_Table::TYPE_TINYINT, 1,
-        array('unsigned' => true, 'default' => 1)
+        array('unsigned' => true, 'nullable' => false, 'default' => 1)
     )
     ->addIndex(
         'IDX_REWRITE',

@@ -20,7 +20,7 @@
 <config>
     <modules>
         <EcomDev_UrlRewrite>
-            <version>0.1.0</version>
+            <version>0.1.1</version>
         </EcomDev_UrlRewrite>
     </modules>
     <global>
@@ -32,12 +32,18 @@
             <ecomdev_urlrewrite_mysql4>
                 <class>EcomDev_UrlRewrite_Model_Mysql4</class>
                 <entities>
+                    <root_category>
+                        <table>ecomdev_urlrewrite_root_category</table>
+                    </root_category>
+                    <category_url_key>
+                        <table>ecomdev_urlrewrite_category_url_key</table>
+                    </category_url_key>
                     <category_request_path>
                         <table>ecomdev_urlrewrite_category_request_path</table>
                     </category_request_path>
-                    <category_request_path_tmp>
-                        <table>ecomdev_urlrewrite_category_request_path_tmp</table>
-                    </category_request_path_tmp>
+                    <product_url_key>
+                        <table>ecomdev_urlrewrite_product_url_key</table>
+                    </product_url_key>
                     <product_request_path>
                         <table>ecomdev_urlrewrite_product_request_path</table>
                     </product_request_path>
@@ -47,6 +53,9 @@
                     <duplicate>
                         <table>ecomdev_urlrewrite_duplicate</table>
                     </duplicate>
+                    <duplicate_aggregate>
+                        <table>ecomdev_urlrewrite_duplicate_aggregate</table>
+                    </duplicate_aggregate>
                     <category_relation>
                         <table>ecomdev_urlrewrite_category_relation</table>
                     </category_relation>

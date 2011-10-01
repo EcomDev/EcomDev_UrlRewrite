@@ -3,202 +3,144 @@ tables: # Pregenerated category url path index, for testing product request path
     - category_id: 21
       store_id: 1
       id_path: category/21
-      level: 2
-      url_key: "comedy"
       request_path: "comedy"
       updated: 1
     - category_id: 21
       store_id: 21
       id_path: category/21
-      level: 2
-      url_key: "comedy"
       request_path: "comedy"
       updated: 1
     - category_id: 21
       store_id: 22
       id_path: category/21
-      level: 2
-      url_key: "komodie"
       request_path: "komodie"
       updated: 1
     - category_id: 21
       store_id: 23
       id_path: category/21
-      level: 2
-      url_key: "komedija"
       request_path: "komedija"
       updated: 1
     - category_id: 22
       store_id: 1
       id_path: category/22
-      level: 2
-      url_key: "sci-fi"
       request_path: "sci-fi"
       updated: 1
     - category_id: 22
       store_id: 21
       id_path: category/22
-      level: 2
-      url_key: "sci-fi"
       request_path: "sci-fi"
       updated: 1
     - category_id: 22
       store_id: 22
       id_path: category/22
-      level: 2
-      url_key: "sci-fi"
       request_path: "sci-fi"
       updated: 1
     - category_id: 22
       store_id: 23
       id_path: category/22
-      level: 2
-      url_key: "fantastyka"
       request_path: "fantastyka"
       updated: 1
     - category_id: 30
       store_id: 31
       id_path: category/30
-      level: 2
-      url_key: "advanced"
       request_path: "advanced"
       updated: 1
     - category_id: 30
       store_id: 32
       id_path: category/30
-      level: 2
-      url_key: "advanced"
       request_path: "advanced"
       updated: 1
     - category_id: 30
       store_id: 33
       id_path: category/30
-      level: 2
-      url_key: "advanced"
       request_path: "advanced"
       updated: 1
     - category_id: 31
       store_id: 31
       id_path: category/31
-      level: 3
-      url_key: "url-rewrites"
       request_path: "advanced/url-rewrites"
       updated: 1
     - category_id: 31
       store_id: 32
       id_path: category/31
-      level: 3
-      url_key: "url-rewrites"
       request_path: "advanced/url-rewrites"
       updated: 1
     - category_id: 31
       store_id: 33
       id_path: category/31
-      level: 3
-      url_key: "url-rewrites"
       request_path: "advanced/url-rewrites"
       updated: 1
     - category_id: 32
       store_id: 31
       id_path: category/32
-      level: 3
-      url_key: "url-rewrites"
       request_path: "advanced/url-rewrites"
       updated: 1
     - category_id: 32
       store_id: 32
       id_path: category/32
-      level: 3
-      url_key: "url-rewrites"
       request_path: "advanced/url-rewrites"
       updated: 1
     - category_id: 32
       store_id: 33
       id_path: category/32
-      level: 3
-      url_key: "url-rewrites"
       request_path: "advanced/url-rewrites"
       updated: 1
     - category_id: 221
       store_id: 1
       id_path: category/221
-      level: 3
-      url_key: "aliens"
       request_path: "sci-fi/aliens"
       updated: 1
     - category_id: 221
       store_id: 21
       id_path: category/221
-      level: 3
-      url_key: "aliens"
       request_path: "sci-fi/aliens"
       updated: 1
     - category_id: 221
       store_id: 22
       id_path: category/221
-      level: 3
-      url_key: "aliens"
       request_path: "sci-fi/aliens"
       updated: 1
     - category_id: 221
       store_id: 23
       id_path: category/221
-      level: 3
-      url_key: "pribul-ci"
       request_path: "fantastyka/pribul-ci"
       updated: 1
     - category_id: 222
       store_id: 1
       id_path: category/222
-      level: 3
-      url_key: "time-travels"
       request_path: "sci-fi/time-travels"
       updated: 1
     - category_id: 222
       store_id: 21
       id_path: category/222
-      level: 3
-      url_key: "time-travels"
       request_path: "sci-fi/time-travels"
       updated: 1
     - category_id: 222
       store_id: 22
       id_path: category/222
-      level: 3
-      url_key: "zeitreisen"
       request_path: "sci-fi/zeitreisen"
       updated: 1
     - category_id: 222
       store_id: 23
-      level: 3
-      url_key: "podorozhi-u-chasi"
       request_path: "fantastyka/podorozhi-u-chasi"
       updated: 1
     - category_id: 2211
       store_id: 1
       id_path: category/2211
-      level: 4
-      url_key: "humanoids"
       request_path: "sci-fi/aliens/humanoids"
       updated: 1
     - category_id: 2211
       store_id: 21
       id_path: category/2211
-      level: 4
-      url_key: "humanoids"
       request_path: "sci-fi/aliens/humanoids"
       updated: 1
     - category_id: 2211
       store_id: 22
       id_path: category/2211
-      level: 4
-      url_key: "humanoide"
       request_path: "sci-fi/aliens/humanoide"
       updated: 1
     - category_id: 2211
       store_id: 23
       id_path: category/2211
-      level: 4
-      url_key: "gumanoidi"
       request_path: "fantastyka/pribul-ci/gumanoidi"
       updated: 1
