@@ -1127,21 +1127,23 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     {
         $select = $this->_getIndexAdapter()->select();
         $select
-            ->from(
-                array('rewrite' => $this->getTable('core/url_rewrite'))
+            ->from(array('rewrite' => $this->getTable('core/url_rewrite')), 'url_rewrite_id')
+            ->join(
+                array('category' => $this->getTable('catalog/category')),
+                'category.entity_id = rewrite.category_id'
             )
-            ->joinLeft(
-                array('request_path' => $this->getTable(self::CATEGORY_REQUEST_PATH)), 
-                'request_path.store_id = rewrite.store_id AND request_path.category_id = rewrite.category_id'
+            ->join(
+                array('root_category' => $this->getTable('core/store')), 
+                'root_category.store_id = rewrite.store_id '
             )
-            ->where('request_path.category_id IS NULL')
-            ->where('rewrite.category_id IS NOT NULL');
-         
+            // If category is not in a store root category where rewrite is. 
+            ->where('category.path NOT LIKE root_category.path');
+
         Mage::dispatchEvent(
             'ecomdev_urlrewrite_indexer_clear_invalid_category_rewrites_select', 
             array('resource' => $this, 'select' => $select)
         );
-        
+
         $this->_getIndexAdapter()->query(
             $select->deleteFromSelect('rewrite')
         );
@@ -1159,14 +1161,18 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $select = $this->_getIndexAdapter()->select();
         $select
             ->from(array('rewrite' => $this->getTable('core/url_rewrite')), 'url_rewrite_id')
+            ->join(
+                array('store' => $this->getTable('core/store')), 
+                'store.store_id = rewrite.store_id '
+            )
             ->joinLeft(
-                array('request_path' => $this->getTable(self::PRODUCT_REQUEST_PATH)), 
-                'request_path.store_id = rewrite.store_id ' 
-                . 'AND request_path.product_id = rewrite.product_id ' 
+                array('product_website' => $this->getTable('core/website')), 
+                'product_website.website_id =  store.website_id AND '
+                . ' AND product_website.product_id = rewrite.product_id'
             )
             // If product is not assigned to a website where url rewrite is. 
-            ->where('request_path.product_id IS NULL')
-            ->where('rewrite.product_id IS NOT NULL');
+            ->where('rewrite.product_id IS NOT NULL')
+            ->where('product_website.product_id IS NULL');
             
         Mage::dispatchEvent(
             'ecomdev_urlrewrite_indexer_clear_invalid_product_rewrites_select_root', 
@@ -1177,15 +1183,19 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             $select->deleteFromSelect('rewrite')
         );
         
-        $select->reset
+        $select
+            ->reset()
             ->from(array('rewrite' => $this->getTable('core/url_rewrite')), 'url_rewrite_id')
             ->joinLeft(
-                array('request_path' => $this->getTable(self::PRODUCT_REQUEST_PATH)), 
-                'request_path.store_id = rewrite.store_id ' 
-                . 'AND request_path.product_id = rewrite.product_id '
-                . 'AND request_path.category_id = rewrite.category_id ' 
-            );
-        
+                array('product_category' => $this->getTable('core/website')), 
+                'product_category.category_id =  rewrite.category_id AND '
+                . ' AND product_category.product_id = rewrite.product_id'
+            )
+            // If product is not assigned to a category where url rewrite is. 
+            ->where('rewrite.product_id IS NOT NULL')
+            ->where('rewrite.category_id IS NOT NULL')
+            ->where('product_category.category_id IS NULL');
+            
         Mage::dispatchEvent(
             'ecomdev_urlrewrite_indexer_clear_invalid_product_rewrites_select_category', 
             array('resource' => $this, 'select' => $select)
@@ -1849,9 +1859,9 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this
             ->_generateTransliterateData()
             ->_generateRootCategoryIndex()
+            ->clearInvalidRewrites()
             ->_generateCategoryRequestPathIndex()
             ->_generateProductRequestPathIndex()
-            ->clearInvalidRewrites()
             ->_importFromRewrite()
             ->_importFromCategoryRequestPath()
             ->_importFromProductRequestPath()
@@ -1869,9 +1879,9 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this
             ->_generateTransliterateData(true)
             ->_generateRootCategoryIndex()
+            ->clearInvalidRewrites()
             ->_generateCategoryRequestPathIndex($cateoryIds)
             ->_generateProductRequestPathIndex($cateoryIds)
-            ->clearInvalidRewrites()
             ->_importFromRewrite()
             ->_importFromCategoryRequestPath()
             ->_importFromProductRequestPath()
@@ -1892,7 +1902,6 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this
             ->_generateTransliterateData(true)
             ->_generateProductRequestPathIndex($categoryIds, $productIds)
-            ->_clearInvalidProductRewrites()
             ->_importFromRewrite()
             ->_importFromProductRequestPath()
             ->_updateRewrites();
