@@ -513,10 +513,11 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         
         // Initialize tables for fullfilment of request path index for products
         if ($category !== false) {
-            $select->from(
-                array('category' => $this->getTable(self::CATEGORY_REQUEST_PATH)),
-                array()
-            );
+            $select->useStraightJoin(true)
+                ->from(
+                    array('category' => $this->getTable(self::CATEGORY_REQUEST_PATH)),
+                    array()
+                 );
             
             if ($category === self::RELATION_TYPE_NESTED) {
                 $joinCondition = 'category.category_id = category_product.category_id ';
