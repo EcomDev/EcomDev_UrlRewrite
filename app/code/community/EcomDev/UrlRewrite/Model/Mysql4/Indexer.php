@@ -31,6 +31,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     const PRODUCT_REQUEST_PATH = 'product_request_path';
     const REWRITE = 'rewrite';
     const DUPLICATE = 'duplicate';
+    const DUPLICATE_INCREMENT = 'duplicate_increment';
     const DUPLICATE_AGGREGATE = 'duplicate_aggregate';
 
     const MAX_LENGTH_URL_PATH = 245;
@@ -104,6 +105,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             self::PRODUCT_REQUEST_PATH => '',
             self::REWRITE => '',
             self::DUPLICATE => '',
+            self::DUPLICATE_INCREMENT => '',
             self::DUPLICATE_AGGREGATE => ''
         );
         
@@ -517,7 +519,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 ->from(
                     array('category' => $this->getTable(self::CATEGORY_REQUEST_PATH)),
                     array()
-                 );
+                );
             
             if ($category === self::RELATION_TYPE_NESTED) {
                 $joinCondition = 'category.category_id = category_product.category_id ';
@@ -1356,7 +1358,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             'duplicate_index' => new Zend_Db_Expr(
                 $this->_quoteInto('SUBSTRING_INDEX(rewrite.duplicate_key, ?, -1)', '-')
             ),
-            'is_duplicate' => new Zend_Db_Expr('1')
+            'is_duplicate' => new Zend_Db_Expr('0')
         );
         
         $select->columns($columns);
@@ -1372,12 +1374,13 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 $this->_getColumnsFromSelect($select)
             )
         );
+        
         $select->reset()
             ->join(
                 array('duplicate' => $this->getTable(self::DUPLICATE)),
-                'duplicate.duplicate_id != original.duplicate_id'
-                . ' AND duplicate.duplicate_key = original.duplicate_key ' 
-                . ' AND duplicate.store_id = original.store_id ',
+                'duplicate.id_path != original.id_path'
+                . ' AND duplicate.store_id = original.store_id '
+                . ' AND duplicate.duplicate_key = original.duplicate_key ',
                 array('is_duplicate' => new Zend_Db_Expr('1'))
             );
         
@@ -1417,6 +1420,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         );
         
         $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE));
+        $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_INCREMENT));
         $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_AGGREGATE));
         return $this;
     }
@@ -1585,7 +1589,6 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             // Second condition for request path values that have digits in the end
             ->where('duplicate.id_path IS NOT NULL OR rewrite.duplicate_index = ?', 0)
             ->where('rewrite.duplicate_index IS NULL OR rewrite.duplicate_index = ?', 0)
-            ->order(array('rewrite.store_id ASC', 'rewrite.duplicate_key ASC', 'rewrite.id_path ASC'))
             ->group(array('rewrite.store_id', 'rewrite.id_path'));
          
         $columns = array(
@@ -1598,18 +1601,26 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $select->columns($columns);
 
         $result = $this->_getWriteAdapter()->query(
-            $select->insertFromSelect(
+            $select->insertIgnoreFromSelect(
                 $this->getTable(self::DUPLICATE), 
-                $this->_getColumnsFromSelect($select),
-                false
+                $this->_getColumnsFromSelect($select)
             )
         );
          
-        $select->reset();
+        $select->reset()
+            ->from($this->getTable(self::DUPLICATE), array('store_id', 'id_path', 'duplicate_key'))
+            ->order(array('store_id ASC', 'duplicate_key ASC'));
         
-        $select
+        $this->_getIndexAdapter()->query(
+            $select->insertIgnoreFromSelect(
+                $this->getTable(self::DUPLICATE_INCREMENT), 
+                $this->_getColumnsFromSelect($select)
+            )
+        );
+            
+        $select->reset()
             ->from(
-                array('duplicate' => $this->getTable(self::DUPLICATE)),
+                array('duplicate' => $this->getTable(self::DUPLICATE_INCREMENT)),
                 'duplicate_id'
             )
             ->join(
@@ -1618,14 +1629,13 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 array('max_index' => new Zend_Db_Expr('IFNULL(MAX(rewrite.duplicate_index), 0)'))
             )
             ->join(
-                 array('min_duplicate' => $this->getTable(self::DUPLICATE)), 
+                 array('min_duplicate' => $this->getTable(self::DUPLICATE_INCREMENT)), 
                  'min_duplicate.store_id = duplicate.store_id AND min_duplicate.duplicate_key = duplicate.duplicate_key',
                  array('min_duplicate_id' => new Zend_Db_Expr('MIN(min_duplicate.duplicate_id)'))
             )->group('duplicate.duplicate_id');
-            
-            
+
         $this->_getIndexAdapter()->query(
-            $select->insertFromSelect(
+            $select->insertIgnoreFromSelect(
                 $this->getTable(self::DUPLICATE_AGGREGATE), 
                 $this->_getColumnsFromSelect($select)
             )
@@ -1633,21 +1643,26 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
 
         $columns = array(
             'duplicate_index' => new Zend_Db_Expr( 
-                'aggregate.max_index + 1 + duplicate.duplicate_id - aggregate.min_duplicate_id'
+                'aggregate.max_index + 1 + duplicate_increment.duplicate_id - aggregate.min_duplicate_id'
             )
         );
          
         $select->reset()
             ->join(
+                array('duplicate_increment' => $this->getTable(self::DUPLICATE_INCREMENT)),
+                'duplicate_increment.store_id = duplicate.store_id AND duplicate_increment.id_path = duplicate.id_path', 
+                $columns
+            )
+            ->join(
                 array('aggregate' => $this->getTable(self::DUPLICATE_AGGREGATE)),
-                'aggregate.duplicate_id = duplicate.duplicate_id', 
+                'aggregate.duplicate_id = duplicate_increment.duplicate_id', 
                 $columns
             );
 
         $this->_getIndexAdapter()->query(
             $select->crossUpdateFromSelect(array('duplicate' => $this->getTable(self::DUPLICATE)))
         );
-         
+        
         $this->_updateRewriteDuplicates();
         return $this;
     }
@@ -1669,10 +1684,10 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         
         $this->_getIndexAdapter()->update(
             $this->getTable(self::REWRITE),
-            array(
+           array(
                 'original_request_path' => new Zend_Db_Expr(
                     'IFNULL(request_path, original_request_path)'
-                ),
+                 ),
                 'request_path' => new Zend_Db_Expr(
                     'IF(product_id IS NULL, ' 
                     . $categoryRequestPathExpr . ', '

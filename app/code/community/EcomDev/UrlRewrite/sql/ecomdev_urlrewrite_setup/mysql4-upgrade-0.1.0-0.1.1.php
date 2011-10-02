@@ -161,16 +161,12 @@ $table = $this->getConnection()->newTable(
 
 $table
     ->addColumn(
-        'duplicate_id', Varien_Db_Ddl_Table::TYPE_INTEGER, null,
-        array('unsigned' => true, 'nullable' => false, 'primary' => true, 'identity' => true)
-    )
-    ->addColumn(
-        'store_id', Varien_Db_Ddl_Table::TYPE_SMALLINT, 1,
-        array('unsigned' => true, 'nullable' => false, 'default' => 1)
+        'store_id', Varien_Db_Ddl_Table::TYPE_SMALLINT, null,
+        array('unsigned' => true, 'nullable' => false, 'primary' => true)
     )
     ->addColumn(
         'id_path', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
-        array('unsigned' => true, 'nullable' => false, 'default' => 1)
+        array('unsigned' => true, 'nullable' => false, 'primary' => true)
     )
     ->addColumn(
         'is_duplicate', Varien_Db_Ddl_Table::TYPE_TINYINT, 1,
@@ -185,11 +181,37 @@ $table
         array('nullable' => false)
     )
     ->addIndex(
-       'IDX_STORE_ID_PATH', array('store_id', 'id_path')
-    )
-    ->addIndex(
        'IDX_STORE_DUPLICATE_KEY', array('store_id', 'duplicate_key')
     )
+    ->addIndex(
+       'IDX_DUPLICATE', array('is_duplicate')
+    )
+    ->setOption('collate', null);
+
+$this->getConnection()->createTable($table);
+
+$table = $this->getConnection()->newTable(
+    $this->getTable('ecomdev_urlrewrite/duplicate_increment')
+);
+
+$table
+    ->addColumn(
+        'duplicate_id', Varien_Db_Ddl_Table::TYPE_INTEGER, null,
+        array('unsigned' => true, 'nullable' => false, 'primary' => true, 'identifier' => 1)
+    )
+    ->addColumn(
+        'store_id', Varien_Db_Ddl_Table::TYPE_SMALLINT, null,
+        array('unsigned' => true, 'nullable' => false)
+    )
+    ->addColumn(
+        'id_path', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
+        array('unsigned' => true, 'nullable' => false)
+    )
+    ->addColumn(
+        'duplicate_key', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
+        array('nullable' => false)
+    )
+    ->addIndex('IDX_STORE_ID_PATH', array('store_id', 'id_path'))
     ->setOption('collate', null);
 
 $this->getConnection()->createTable($table);
@@ -198,7 +220,7 @@ $this->getConnection()->createTable($table);
 // So we need to modify our column
 if (!method_exists($this->getConnection(), 'insertFromSelect')) {
     $this->getConnection()->modifyColumn(
-        $this->getTable('ecomdev_urlrewrite/duplicate'), 
+        $this->getTable('ecomdev_urlrewrite/duplicate_increment'), 
         'duplicate_id', 'INT(10) UNSIGNED NOT NULL AUTO_INCREMENT'
     );
 }

@@ -53,6 +53,9 @@
                     <duplicate>
                         <table>ecomdev_urlrewrite_duplicate</table>
                     </duplicate>
+                    <duplicate_increment>
+                        <table>ecomdev_urlrewrite_duplicate_increment</table>
+                    </duplicate_increment>
                     <duplicate_aggregate>
                         <table>ecomdev_urlrewrite_duplicate_aggregate</table>
                     </duplicate_aggregate>
