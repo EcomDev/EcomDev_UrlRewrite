@@ -1166,8 +1166,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 'store.store_id = rewrite.store_id '
             )
             ->joinLeft(
-                array('product_website' => $this->getTable('core/website')), 
-                'product_website.website_id =  store.website_id '
+                array('product_website' => $this->getTable('catalog/product_website')), 
+                'product_website.website_id = store.website_id '
                 . ' AND product_website.product_id = rewrite.product_id'
             )
             // If product is not assigned to a website where url rewrite is. 
