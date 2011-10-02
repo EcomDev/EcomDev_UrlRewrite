@@ -518,6 +518,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         if ($category !== false) {
             // If we need to gather url path for product category association
             $select
+                // Stupid Mysqls join category record first, instead of product one :)
+                ->useStraightJoin(true)
                 ->join(
                     array('category_product' => $this->getTable('catalog/category_product')), 
                     'category_product.product_id = url_key.product_id',
@@ -1070,6 +1072,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             $this->_getIndexAdapter()->delete($this->getTable(self::PRODUCT_REQUEST_PATH), $condition);
         }
         
+        $this->beginTransaction();
+        
         // Initialize rewrite request path data
         foreach (array(false, self::RELATION_TYPE_NESTED, self::RELATION_TYPE_ANCHOR) as $categoryRewriteFlag) {
             $select = $this->_getProductRequestPathSelect($categoryRewriteFlag);
@@ -1085,6 +1089,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 )
             );
         }
+        
+        $this->commit();
         
         Mage::dispatchEvent(
             'ecomdev_urlrewrite_indexer_generate_product_url_path_index_after', 

@@ -29,6 +29,32 @@ $this->getConnection()->dropColumn(
     'url_key'
 );
 
+// Remove slow downers
+$this->getConnection()->dropForeignKey(
+    $this->getTable('ecomdev_urlrewrite/category_request_path'),
+    'FK_ECOMDEV_URLREWRITE_CAT_URL_KEY_STORE'
+);
+
+$this->getConnection()->dropForeignKey(
+    $this->getTable('ecomdev_urlrewrite/category_request_path'),
+    'FK_ECOMDEV_URLREWRITE_CAT_URL_KEY_CATEGORY'
+);
+
+$this->getConnection()->dropForeignKey(
+    $this->getTable('ecomdev_urlrewrite/product_request_path'),
+    'FK_ECOMDEV_URLREWRITE_PROD_URL_KEY_STORE'
+);
+
+$this->getConnection()->dropForeignKey(
+    $this->getTable('ecomdev_urlrewrite/product_request_path'),
+    'FK_ECOMDEV_URLREWRITE_PROD_URL_KEY_CATEGORY'
+);
+
+$this->getConnection()->dropForeignKey(
+    $this->getTable('ecomdev_urlrewrite/product_request_path'),
+    'FK_ECOMDEV_URLREWRITE_PROD_URL_KEY_PRODUCT'
+);
+
 $this->getConnection()->query(
     'DROP TABLE IF EXISTS ' . $this->getTable('ecomdev_urlrewrite_category_request_path_tmp')
 );
