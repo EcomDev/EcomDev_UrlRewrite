@@ -352,12 +352,6 @@ BEGIN
 
         SET _char_position = _char_position + 1;
    END WHILE;
-   
-   IF _clean_url_key REGEXP '-[0-9]{1,2}$' THEN
-        SET _clean_url_key = SUBSTR(_clean_url_key, 1, LENGTH(_clean_url_key) - LENGTH(
-            SUBSTRING_INDEX(_clean_url_key, '-', -1)
-        ));
-   END IF;
 
 RETURN TRIM(BOTH '-' FROM CONCAT('', _clean_url_key));
 END
