@@ -517,6 +517,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 array('category' => $this->getTable(self::CATEGORY_REQUEST_PATH)),
                 array()
             );
+            
             if ($category === self::RELATION_TYPE_NESTED) {
                 $joinCondition = 'category.category_id = category_product.category_id ';
             } else {
@@ -1086,7 +1087,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             }
             
             $this->_getIndexAdapter()->query(
-                $select->insertFromSelect(
+                $select->insertIgnoreFromSelect(
                     $this->getTable(self::PRODUCT_REQUEST_PATH),
                     $this->_getColumnsFromSelect($select)
                 )
