@@ -1806,6 +1806,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     {
         $this
             ->_generateTransliterateData()
+            ->_generateRootCategoryIndex()
             ->_generateCategoryRequestPathIndex()
             ->_generateProductRequestPathIndex()
             ->clearInvalidRewrites()
@@ -1825,6 +1826,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     {
         $this
             ->_generateTransliterateData(true)
+            ->_generateRootCategoryIndex()
             ->_generateCategoryRequestPathIndex($cateoryIds)
             ->_generateProductRequestPathIndex($cateoryIds)
             ->clearInvalidRewrites()
