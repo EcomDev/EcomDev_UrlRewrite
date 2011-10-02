@@ -512,39 +512,42 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $select = $this->_getIndexAdapter()->select();
         
         // Initialize tables for fullfilment of request path index for products
-        $select
-            ->from(array('url_key' => $this->getTable(self::PRODUCT_URL_KEY)), array());
-        
         if ($category !== false) {
-            // If we need to gather url path for product category association
-            $select
-                // Stupid Mysqls join category record first, instead of product one :)
-                ->useStraightJoin(true)
-                ->join(
-                    array('category_product' => $this->getTable('catalog/category_product')), 
-                    'category_product.product_id = url_key.product_id',
-                    array()
-                );
-            $joinCondition = 'category.store_id = url_key.store_id';
+            $select->from(
+                array('category' => $this->getTable(self::CATEGORY_REQUEST_PATH)),
+                array()
+            );
             if ($category === self::RELATION_TYPE_NESTED) {
-                $joinCondition .= ' AND category.category_id = category_product.category_id ';
+                $joinCondition = 'category.category_id = category_product.category_id ';
             } else {
-                $joinCondition .= ' AND category.category_id = category_relation_child.category_id ';
                 $select->join(
-                    array('category_relation_child' => $this->getTable(self::CATEGORY_RELATION)),
+                    array('category_relation' => $this->getTable(self::CATEGORY_RELATION)),
                     $this->_quoteInto(
-                       'category_relation_child.related_id = category_product.category_id and category_relation_child.type = ?', 
+                       'category_relation.category_id = category.category_id and category_relation.type = ?', 
                         self::RELATION_TYPE_ANCHOR
                     ),
                     array()
                 );
+                $joinCondition = 'category.category_id = category_relation.related_id ';
             }
             
-            $select->join(
-                array('category' => $this->getTable(self::CATEGORY_REQUEST_PATH)),
-                $joinCondition,
-                array()
-            );
+            // If we need to gather url path for product category association
+            $select
+                ->join(
+                    array('category_product' => $this->getTable('catalog/category_product')), 
+                    $joinCondition,
+                    array()
+                );
+            
+            $select
+                ->join(
+                    array('url_key' => $this->getTable(self::PRODUCT_URL_KEY)), 
+                    'url_key.store_id = category.store_id AND url_key.product_id = category_product.product_id',
+                    array()
+                );
+        } else {
+            $select
+                ->from(array('url_key' => $this->getTable(self::PRODUCT_URL_KEY)), array());
         }
                 
         $requestPathExpr = $this->_quoteInto( 
