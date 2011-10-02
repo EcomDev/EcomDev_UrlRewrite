@@ -1133,7 +1133,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 'category.entity_id = rewrite.category_id'
             )
             ->join(
-                array('root_category' => $this->getTable('core/store')), 
+                array('root_category' => $this->getTable(self::ROOT_CATEGORY)), 
                 'root_category.store_id = rewrite.store_id '
             )
             // If category is not in a store root category where rewrite is. 
