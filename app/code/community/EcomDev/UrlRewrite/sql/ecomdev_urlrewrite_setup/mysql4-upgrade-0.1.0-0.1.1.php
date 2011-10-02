@@ -198,5 +198,4 @@ $table
 
 $this->getConnection()->createTable($table);
 
-
 $this->endSetup();

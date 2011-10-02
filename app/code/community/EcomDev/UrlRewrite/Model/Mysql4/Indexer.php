@@ -350,131 +350,33 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     }
     
     /**
-     * Prepares category request path select
+     * Prepares product url key select
      * 
      * @return Varien_Db_Select
      */
-    protected function _getCategoryRequestPathSelect()
-    {
-        $urlKeyAttribute = $this->_getEavConfig()->getAttribute(self::ENTITY_CATEGORY, 'url_key');
-        $nameAttribute = $this->_getEavConfig()->getAttribute(self::ENTITY_CATEGORY, 'name');
-        $select = $this->_getIndexAdapter()->select();
-        
-        // Initialize tables for fullfilment of request path index for categories
-        $select
-            // Generate path index from already generated url url keys 
-            ->from(
-                array('url_key' => $this->getTable(self::CATEGORY_URL_KEY)), 
-                array()
-            )
-            ->joinLeft(
-                array('relation' => $this->getTable(self::CATEGORY_RELATION)),
-                $this->_quoteInto(
-                   'relation.related_id = url_key.category_id AND relation.type = ?', self::RELATION_TYPE_NESTED
-                ),
-                array()
-            )
-            ->joinLeft(
-                array('parent_url_key' => $this->getTable(self::CATEGORY_URL_KEY)), 
-                'url_key.store_id = parent_url_key.store_id AND url_key.category_id = relation.category_id',
-                array()
-            );
-
-        $columns = array(
-            'store_id' => 'url_key.store_id',
-            'id_path' => new Zend_Db_Expr($this->_quoteInto(
-                sprintf(
-                    $this->_pathGenerateExpr[self::ID_PATH_CATEGORY], 
-                    'url_key.category_id'
-                ),
-                self::ID_PATH_CATEGORY
-            )),
-            'category_id' => 'url_key.category_id',
-            'level' => 'url_key.level', 
-            'request_path' => new Zend_Db_Expr($this->_quoteInto(
-                'TRIM(LEADING ? FROM CONCAT(' 
-                    . 'GROUP_CONCAT(parent_url_key.url_key ORDER BY parent_url_key.level ASC SEPARATOR ?), ' 
-                    . '?, url_key.url_key' 
-                . '))',
-                '/'
-            )),
-            'updated' => new Zend_Db_Expr('1')
-        );
-
-        $select
-            ->columns($columns)
-            ->group(array('url_key.store_id', 'url_key.category_id'));
-
-        Mage::dispatchEvent(
-            'ecomdev_urlrewrite_indexer_get_category_request_path_select', 
-            array('select' => $select, 'columns' => $columns, 'resource' => $this)
-        );
-        
-        return $select;
-    }
-    
-    /**
-     * Prepares product request path select
-     * 
-     * @param string $category category direct, category nested or root level rewrite?
-     * @return Varien_Db_Select
-     */
-    protected function _getProductRequestPathSelect($category = false)
+    protected function _getProductUrlKeySelect()
     {
         $urlKeyAttribute = $this->_getEavConfig()->getAttribute(self::ENTITY_PRODUCT, 'url_key');
         $nameAttribute = $this->_getEavConfig()->getAttribute(self::ENTITY_PRODUCT, 'name');
         
         $select = $this->_getIndexAdapter()->select();
-        
-        // Initialize tables for fullfilment of request path index for products
+        // Initialize tables for fullfilment of url key index for categories
         $select
             ->from(array('product' => $this->getTable('catalog/product')), array())
-            // Data should be generated only for products that are assigned for a particular website
+            // Data should be generated only for products that are assigned for that are available on the website
             ->join(
                 array('product_website' => $this->getTable('catalog/product_website')), 
                 'product_website.product_id = product.entity_id', 
                 array())
             ->join(
-                array('website' => $this->getTable('core/website')), 
-                'website.website_id = product_website.website_id', 
+                array('store' => $this->getTable('core/store')), 
+               'store.website_id = product_website.website_id',
                 array())
-            // Data should be generated for each store view
-            // And only for categories in its store group
-            ->join(array('store' => $this->getTable('core/store')), 'store.website_id = website.website_id', array())
-            ->join(array('store_group' => $this->getTable('core/store_group')),
-                   'store_group.group_id = store.group_id',
-                    array());
-        
-        if ($category !== false) {
-            // If we need to gather url path for product category association
-            $select
-                ->join(
-                    array('category_product' => $this->getTable('catalog/category_product')), 
-                    'category_product.product_id = product.entity_id',
-                    array()
-                );
-            $joinCondition = 'category.store_id = store.store_id';
-            if ($category === self::RELATION_TYPE_NESTED) {
-                $joinCondition .= ' AND category.category_id = category_product.category_id ';
-            } else {
-                $joinCondition .= ' AND category.category_id = category_relation_child.category_id ';
-                $select->join(
-                    array('category_relation_child' => $this->getTable(self::CATEGORY_RELATION)),
-                    $this->_quoteInto(
-                       'category_relation_child.related_id = category_product.category_id and category_relation_child.type = ?', 
-                        self::RELATION_TYPE_ANCHOR
-                    ),
-                    array()
-                );
-            }
-            
-            $select->join(
-                array('category' => $this->getTable(self::CATEGORY_REQUEST_PATH)),
-                $joinCondition,
+            ->joinLeft(
+                array('original' => $this->getTable(self::PRODUCT_URL_KEY)),
+                'original.product_id = product.entity_id AND original.store_id = store.store_id',
                 array()
-            );
-        }
-        $select
+            )
             // Name attribute values retrieval (for default and store)
             ->join(array('name_default' => $nameAttribute->getBackendTable()), 
                    'name_default.entity_id = product.entity_id' 
@@ -505,50 +407,175 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                        ' AND url_key_store.attribute_id = ?',
                        $urlKeyAttribute->getAttributeId()),
                    array());
-        
-        $urlKeyExpr =  new Zend_Db_Expr( 
-             'ECOMDEV_CLEAN_URL_KEY(IFNULL(' 
+
+        $urlKeySourceExpr =  new Zend_Db_Expr(
+            'IFNULL(' 
                   . ' IFNULL(url_key_store.value, url_key_default.value), ' 
                   . ' IFNULL(name_store.value, name_default.value) '
-            . '))'
+            . ')'
         );
         
-        $requestPathExpr =  new Zend_Db_Expr($this->_quoteInto( 
-            'CONCAT(category.request_path, ?, ' . $urlKeyExpr . ')',
+        $columns = array(
+            'store_id' => 'store.store_id',
+            'product_id' => 'product.entity_id',
+            'url_key_source' => $urlKeySourceExpr,
+            'updated' => new Zend_Db_Expr(
+                'IF(original.product_id IS NULL, 1, ' 
+                . $urlKeySourceExpr . ' != original.url_key_source)'
+            )
+        );
+        
+        $select->columns($columns);
+            
+        Mage::dispatchEvent(
+            'ecomdev_urlrewrite_indexer_get_product_url_key_select', 
+            array('select' => $select, 'columns' => $columns, 'resource' => $this)
+        );
+        
+        return $select;
+    }
+    
+    /**
+     * Prepares category request path select
+     * 
+     * @return Varien_Db_Select
+     */
+    protected function _getCategoryRequestPathSelect()
+    {
+        $select = $this->_getIndexAdapter()->select();
+        
+        // Initialize tables for fullfilment of request path index for categories
+        $select
+            // Generate path index from already generated url url keys 
+            ->from(
+                array('url_key' => $this->getTable(self::CATEGORY_URL_KEY)), 
+                array()
+            )
+            ->joinLeft(
+                array('relation' => $this->getTable(self::CATEGORY_RELATION)),
+                $this->_quoteInto(
+                   'relation.related_id = url_key.category_id AND relation.type = ?', self::RELATION_TYPE_NESTED
+                ),
+                array()
+            )
+            ->joinLeft(
+                array('parent_url_key' => $this->getTable(self::CATEGORY_URL_KEY)), 
+                'parent_url_key.store_id = url_key.store_id AND parent_url_key.category_id = relation.category_id',
+                array()
+            );
+
+        $requestPathExpr = $this->_quoteInto(
+            'TRIM(LEADING ? FROM CONCAT(' 
+                . 'IFNULL(GROUP_CONCAT(parent_url_key.url_key ORDER BY parent_url_key.level ASC SEPARATOR ?), ?), ' 
+                . '?, url_key.url_key' 
+            . '))',
             '/'
-        ));
+        );
+        $columns = array(
+            'store_id' => 'url_key.store_id',
+            'id_path' => new Zend_Db_Expr($this->_quoteInto(
+                sprintf(
+                    $this->_pathGenerateExpr[self::ID_PATH_CATEGORY], 
+                    'url_key.category_id'
+                ),
+                self::ID_PATH_CATEGORY
+            )),
+            'category_id' => 'url_key.category_id',
+            'level' => 'url_key.level', 
+            'request_path' => new Zend_Db_Expr($this->_quoteInto(
+                sprintf('SUBSTRING(%s FROM 1 FOR ?)', $requestPathExpr),
+                self::MAX_LENGTH_URL_PATH
+            )),
+            'updated' => new Zend_Db_Expr('1')
+        );
+
+        $select
+            ->columns($columns)
+            ->group(array('url_key.store_id', 'url_key.category_id'));
+
+        Mage::dispatchEvent(
+            'ecomdev_urlrewrite_indexer_get_category_request_path_select', 
+            array('select' => $select, 'columns' => $columns, 'resource' => $this)
+        );
+        
+        return $select;
+    }
+    
+    /**
+     * Prepares product request path select
+     * 
+     * @param string $category category direct, category nested or root level rewrite?
+     * @return Varien_Db_Select
+     */
+    protected function _getProductRequestPathSelect($category = false)
+    {
+        $select = $this->_getIndexAdapter()->select();
+        
+        // Initialize tables for fullfilment of request path index for products
+        $select
+            ->from(array('url_key' => $this->getTable(self::PRODUCT_URL_KEY)), array());
+        
+        if ($category !== false) {
+            // If we need to gather url path for product category association
+            $select
+                ->join(
+                    array('category_product' => $this->getTable('catalog/category_product')), 
+                    'category_product.product_id = url_key.product_id',
+                    array()
+                );
+            $joinCondition = 'category.store_id = url_key.store_id';
+            if ($category === self::RELATION_TYPE_NESTED) {
+                $joinCondition .= ' AND category.category_id = category_product.category_id ';
+            } else {
+                $joinCondition .= ' AND category.category_id = category_relation_child.category_id ';
+                $select->join(
+                    array('category_relation_child' => $this->getTable(self::CATEGORY_RELATION)),
+                    $this->_quoteInto(
+                       'category_relation_child.related_id = category_product.category_id and category_relation_child.type = ?', 
+                        self::RELATION_TYPE_ANCHOR
+                    ),
+                    array()
+                );
+            }
+            
+            $select->join(
+                array('category' => $this->getTable(self::CATEGORY_REQUEST_PATH)),
+                $joinCondition,
+                array()
+            );
+        }
+                
+        $requestPathExpr = $this->_quoteInto( 
+            'CONCAT(category.request_path, ?, url_key.url_key)',
+            '/'
+        );
         
         $idPathExprKey = ($category !==false ? self::ID_PATH_PRODUCT_CATEGORY : self::ID_PATH_PRODUCT);
         
-        $select
-            ->columns('store_id', 'store')
-            ->columns(
-                array(
-                   'id_path' => new Zend_Db_Expr($this->_quoteInto(
-                        sprintf(
-                            $this->_pathGenerateExpr[$idPathExprKey], 
-                            'product.entity_id',
-                            'category.category_id'
-                        ),
-                        $idPathExprKey
-                    )),
-                   'product_id' => 'entity_id'
-                ), 
-                'product'
-            );
+        
+        $columns = array(
+            'store_id' => 'url_key.store_id',
+            'id_path' => new Zend_Db_Expr($this->_quoteInto(
+                sprintf(
+                    $this->_pathGenerateExpr[$idPathExprKey], 
+                    'url_key.product_id',
+                    'category.category_id'
+                ),
+                $idPathExprKey
+            )),
+            'product_id' => 'url_key.product_id',
+            'category_id' => ($category === false ? new Zend_Db_Expr('NULL') : 'category.category_id'),
+            'request_path' => new Zend_Db_Expr($this->_quoteInto(
+                sprintf(
+                    'SUBSTRING(%s FROM 1 FOR ?)', 
+                    $category === false ? 'url_key.url_key' : $requestPathExpr
+                ),
+                self::MAX_LENGTH_URL_PATH
+            )),
+            'updated' => new Zend_Db_Expr('1')
+        );
 
-        if ($category) {
-            $select->columns('category_id', 'category');
-        } else {
-            $select->columns(array('category_id' => new Zend_Db_Expr('NULL')));
-        }
-
-        $select
-            ->columns(array(
-                'url_key' => $urlKeyExpr,
-                'request_path' => ($category === false ? $urlKeyExpr : $requestPathExpr)
-            ))
-            ->columns(array('updated' => new Zend_Db_Expr('1')));
+        $select->columns($columns);
         
         Mage::dispatchEvent(
             'ecomdev_urlrewrite_indexer_get_product_request_path_select', 
@@ -847,7 +874,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 'category.entity_id = url_key.category_id  AND category.path LIKE root_category.path',
                 array()
             )
-            ->orWhere('category.entity_id IS NULL');
+            ->where('category.entity_id IS NULL');
         
         $this->_getIndexAdapter()->query(
             $select->deleteFromSelect('url_key')
@@ -905,8 +932,6 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             )
         );
 
-        $this->_cleanUrlPath('request_path', self::CATEGORY_REQUEST_PATH, $condition);
-
         Mage::dispatchEvent(
             'ecomdev_urlrewrite_indexer_generate_category_url_path_index_after', 
             array('resource' => $this, 'category_ids' => $categoryIds)
@@ -945,6 +970,62 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     }
     
     /**
+     * Update product url key index 
+     * 
+     * @param array|Varien_Db_Select|null $productIds
+     * @return EcomDev_UrlRewrite_Model_Mysql4_Indexer
+     */
+    protected function _generateProductUrlKeyIndex($productIds = null)
+    {
+        $this->beginTransaction();
+        $select = $this->_getProductUrlKeySelect();
+        
+        if ($productIds !== null) {
+            $select->where('product.entity_id IN(?)', $productIds);
+        }
+        
+        $result = $this->_getIndexAdapter()->query($select->insertFromSelect(
+            $this->getTable(self::PRODUCT_URL_KEY), 
+            $this->_getColumnsFromSelect($select)
+        ));
+        
+        if ($result->rowCount()) {
+            $this->_getIndexAdapter()->update(
+                $this->getTable(self::PRODUCT_URL_KEY),
+                array(
+                    'url_key' => new Zend_Db_Expr('ECOMDEV_CLEAN_URL_KEY(url_key_source)'),
+                    'updated' => 0
+                ),
+                array(
+                    'updated = ?' => 1
+                )
+            );
+        }
+        
+        // Clear not existent rows
+        $select->reset()
+            ->from(array('url_key' => $this->getTable(self::PRODUCT_URL_KEY)), array())
+            ->joinLeft(
+                array('store' => $this->getTable('core/store')),
+                'store.store_id = url_key.store_id',
+                array()
+            )
+            ->joinLeft(
+                array('product_website' => $this->getTable('catalog/product_website')),
+                'product_website.product_id = url_key.product_id AND store.website_id = product_website.website_id',
+                array()
+            )
+            ->where('product_website.product_id IS NULL');
+        
+        $this->_getIndexAdapter()->query(
+            $select->deleteFromSelect('url_key')
+        );
+        $this->commit();
+        
+        return $this;
+    }
+    
+    /**
      * Generates product url path index by category ids or by product ids
      * If no parameters specified, rebuilds all index
      * 
@@ -959,20 +1040,14 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             array('resource' => $this, 'category_ids' => $categoryIds, 'product_ids' => $productIds)
         );
         if ($categoryIds !== null) {
+            $categoryIds = $this->_getCategoryIds($categoryIds);
             $conditionSelect = $this->_getIndexAdapter()->select();
             $conditionSelect
                 ->from(
                     array('category_product' => $this->getTable('catalog/category_product')), 
                     array('product_id')
                 )
-                ->joinLeft(
-                    array('category_relation' => $this->getTable(self::CATEGORY_RELATION)), 
-                    'category_product.category_id = category_relation.related_id '
-                    . $this->_quoteInto(' AND category_relation.type = ? ', self::RELATION_TYPE_NESTED),
-                    array()
-                )
-                ->where('category_product.category_id IN(?)', $categoryIds)
-                ->orWhere('category_relation.category_id IN(?)', $categoryIds);
+                ->where('category_product.category_id IN(?)', $categoryIds);
             
             $condition = array(
                 'product_id IN(?)' => $conditionSelect
@@ -984,16 +1059,23 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             );
         } else {
             $condition = '';
+            $conditionSelect = null;
         }
         
-        $this->_getIndexAdapter()->delete($this->getTable(self::PRODUCT_REQUEST_PATH), $condition);
+        $this->_generateProductUrlKeyIndex($conditionSelect);
+        
+        if ($condition == '') {
+            $this->_getIndexAdapter()->truncate($this->getTable(self::PRODUCT_REQUEST_PATH));
+        } else {
+            $this->_getIndexAdapter()->delete($this->getTable(self::PRODUCT_REQUEST_PATH), $condition);
+        }
         
         // Initialize rewrite request path data
         foreach (array(false, self::RELATION_TYPE_NESTED, self::RELATION_TYPE_ANCHOR) as $categoryRewriteFlag) {
             $select = $this->_getProductRequestPathSelect($categoryRewriteFlag);
             
             if (isset($conditionSelect)) {
-                $select->where('product.entity_id IN(?)', $conditionSelect);
+                $select->where('url_key.product_id IN(?)', $conditionSelect);
             }
             
             $this->_getIndexAdapter()->query(
@@ -1004,51 +1086,10 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             );
         }
         
-        $this->_cleanUrlPath('product_path', self::PRODUCT_REQUEST_PATH, $condition);
         Mage::dispatchEvent(
             'ecomdev_urlrewrite_indexer_generate_product_url_path_index_after', 
             array('resource' => $this, 'category_ids' => $categoryIds, 'product_ids' => $productIds)
         );
-        return $this;
-    }
-    
-	/**
-     * Performs clean url path queries
-     * 
-     * @param string $alias table alias
-     * @param string $table
-     * @param string $condition
-     * @return EcomDev_UrlRewrite_Model_Mysql4_Indexer
-     */
-    protected function _cleanUrlPath($alias, $table, $condition)
-    {
-        
-        if (!$condition) {
-            $condition = array();
-        } elseif (!is_array($condition)) {
-            $condition = array(str_replace($alias . '.', '', $condition) => null);
-        }
-        
-        $condition['LENGTH(request_path) > ?'] = self::MAX_LENGTH_URL_PATH;
-        
-        Mage::dispatchEvent(
-            'ecomdev_urlrewrite_indexer_clean_url_path_before', 
-            array('resource' => $this, 'table' => $this->getTable($table), 'condition' => $condition, 'alias' => $alias)
-        );
-        
-        $this->_getIndexAdapter()->update(
-            array($alias => $this->getTable($table)),
-            array('request_path' => new Zend_Db_Expr(
-                $this->_quoteInto('TRUNCATE(request_path, ?)', self::MAX_LENGTH_URL_PATH)
-            )),
-            $condition
-        );
-        
-        Mage::dispatchEvent(
-            'ecomdev_urlrewrite_indexer_clean_url_path_after', 
-            array('resource' => $this, 'table' => $this->getTable($table), 'condition' => $condition, 'alias' => $alias)
-        );
-        
         return $this;
     }
     
@@ -1074,26 +1115,14 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $select = $this->_getIndexAdapter()->select();
         $select
             ->from(
-                array('category' => $this->getTable('catalog/category')) 
+                array('rewrite' => $this->getTable('core/url_rewrite'))
             )
-            ->join(
-                array('rewrite' => $this->getTable('core/url_rewrite')),
-                'category.entity_id = rewrite.category_id'
+            ->joinLeft(
+                array('request_path' => $this->getTable(self::CATEGORY_REQUEST_PATH)), 
+                'request_path.store_id = rewrite.store_id AND request_path.category_id = rewrite.category_id'
             )
-            ->join(
-                array('store' => $this->getTable('core/store')), 
-                'store.store_id = rewrite.store_id'
-            )
-            ->join(
-                array('store_group' => $this->getTable('core/store_group')),
-                'store_group.group_id = store.group_id'
-            )
-            ->join(
-                array('root_category' => $this->getTable('catalog/category')), 
-                'root_category.entity_id = store_group.root_category_id'
-            )
-            // If root category path and actual do not match with each other
-            ->where('category.path NOT LIKE CONCAT(root_category.path, \'/%\')');
+            ->where('request_path.category_id IS NULL')
+            ->where('rewrite.category_id IS NOT NULL');
          
         Mage::dispatchEvent(
             'ecomdev_urlrewrite_indexer_clear_invalid_category_rewrites_select', 
@@ -1117,25 +1146,17 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $select = $this->_getIndexAdapter()->select();
         $select
             ->from(array('rewrite' => $this->getTable('core/url_rewrite')), 'url_rewrite_id')
-            ->join(
-                array('product' => $this->getTable('catalog/product')), 
-                'product.entity_id = rewrite.product_id'
-            )
-            ->join(
-                array('store' => $this->getTable('core/store')), 
-                'store.store_id = rewrite.store_id'
-            )
-            ->join(
-                array('website' => $this->getTable('core/website')),
-                'website.website_id = store.website_id'
-            )
             ->joinLeft(
-                array('product_website' => $this->getTable('catalog/product_website')), 
-                'product_website.product_id = product.entity_id AND product_website.website_id = website.website_id'
+                array('request_path' => $this->getTable(self::PRODUCT_REQUEST_PATH)), 
+                'request_path.store_id = rewrite.store_id ' 
+                . 'AND request_path.product_id = rewrite.product_id ' 
+                . 'AND (request_path.category_id = rewrite.category_id ' 
+                . ' OR (request_path.category_id IS NULL AND rewrite.category_id IS NULL))'
             )
             // If product is not assigned to a website where url rewrite is. 
-            ->where('product_website.website_id IS NULL');
-        
+            ->where('request_path.product_id IS NULL')
+            ->where('rewrite.product_id IS NOT NULL');
+            
         Mage::dispatchEvent(
             'ecomdev_urlrewrite_indexer_clear_invalid_product_rewrites_select', 
             array('resource' => $this, 'select' => $select)
@@ -1214,7 +1235,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 'rewrite_index.store_id = core_rewrite.store_id AND rewrite_index.id_path = core_rewrite.id_path',
                 array()
             )
-            ->where('rewrite_index.rewrite_id IS NULL');
+            ->where('rewrite_index.store_id IS NULL');
 
         $suffixExpr = 'core_rewrite.request_path';
         
@@ -1255,7 +1276,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         );
         
         foreach (array('id_path', 'store_id', 'target_path', 
-                       'rewrite_id', 'category_id', 'product_id') as $key) {
+                       'category_id', 'product_id') as $key) {
             unset($columns[$key]);
         }
         
@@ -1553,47 +1574,71 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             // Second condition for request path values that have digits in the end
             ->where('duplicate.id_path IS NOT NULL OR rewrite.duplicate_index = ?', 0)
             ->where('rewrite.duplicate_index IS NULL OR rewrite.duplicate_index = ?', 0)
+            ->order(array('rewrite.store_id ASC', 'rewrite.duplicate_key ASC', 'rewrite.id_path ASC'))
             ->group(array('rewrite.store_id', 'rewrite.id_path'));
          
-         $columns = array(
+        $columns = array(
              'store_id' => 'rewrite.store_id',
              'id_path'  => 'rewrite.id_path',
              'duplicate_key' => 'rewrite.duplicate_key',
-             'max_duplicate_index' => new Zend_Db_Expr('IFNULL(MAX(max_duplicate.duplicate_index), 0)')
-         );
-         
-         $select->columns($columns);
-         
-         $result = $this->_getWriteAdapter()->query(
-             $select->insertFromSelect(
-                 $this->getTable(self::DUPLICATE), 
-                 $this->_getColumnsFromSelect($select)
-             )
-         );
+             'is_duplicate' => new Zend_Db_Expr('1')
+        );
 
-         $columns = array(
-             'store_id' => 'store_id',
-             'id_path'  => 'id_path',
-             'duplicate_index' => new Zend_Db_Expr(
-                'IF((@currentPath:=CONCAT(store_id, \'%\', duplicate_key)) != @storePath OR @storePath IS NULL, ' 
-                 . '(@storePath:=@currentPath)*0 + (@currentIndex:=(max_duplicate_index+1)), '
-                 . '@currentIndex:=(@currentIndex+1))'
-             )
-         );
-         
-         $select->reset()
-            ->from($this->getTable(self::DUPLICATE), $columns)
-            ->order(array('duplicate_key ASC', 'store_id ASC'));
+        $select->columns($columns);
 
-         $this->_getIndexAdapter()->query(
-             $select->insertFromSelect(
-                 $this->getTable(self::DUPLICATE), 
-                 $this->_getColumnsFromSelect($select)
-             )
-         );
+        $result = $this->_getWriteAdapter()->query(
+            $select->insertFromSelect(
+                $this->getTable(self::DUPLICATE), 
+                $this->_getColumnsFromSelect($select),
+                false
+            )
+        );
          
-         $this->_updateRewriteDuplicates();
-         return $this;
+        $select->reset();
+        
+        $select
+            ->from(
+                array('duplicate' => $this->getTable(self::DUPLICATE)),
+                'duplicate_id'
+            )
+            ->join(
+                array('rewrite' => $this->getTable(self::REWRITE)), 
+                'rewrite.store_id = duplicate.store_id AND rewrite.duplicate_key = duplicate.duplicate_key',
+                array('max_index' => new Zend_Db_Expr('IFNULL(MAX(rewrite.duplicate_index), 0)'))
+            )
+            ->join(
+                 array('min_duplicate' => $this->getTable(self::DUPLICATE)), 
+                 'min_duplicate.store_id = duplicate.store_id AND min_duplicate.duplicate_key = duplicate.duplicate_key',
+                 array('min_duplicate_id' => new Zend_Db_Expr('MIN(min_duplicate.duplicate_id)'))
+            )->group('duplicate.duplicate_id');
+            
+            
+        $this->_getIndexAdapter()->query(
+            $select->insertFromSelect(
+                $this->getTable(self::DUPLICATE_AGGREGATE), 
+                $this->_getColumnsFromSelect($select)
+            )
+        );
+
+        $columns = array(
+            'duplicate_index' => new Zend_Db_Expr( 
+                'aggregate.max_index + 1 + duplicate.duplicate_id - aggregate.min_duplicate_id'
+            )
+        );
+         
+        $select->reset()
+            ->join(
+                array('aggregate' => $this->getTable(self::DUPLICATE_AGGREGATE)),
+                'aggregate.duplicate_id = duplicate.duplicate_id', 
+                $columns
+            );
+
+        $this->_getIndexAdapter()->query(
+            $select->crossUpdateFromSelect(array('duplicate' => $this->getTable(self::DUPLICATE)))
+        );
+         
+        $this->_updateRewriteDuplicates();
+        return $this;
     }
     
     /**
@@ -1606,7 +1651,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     protected function _updateRewrites()
     {
         $this->_resolveDuplicates();
-        
+
+        $this->beginTransaction();
         $categoryRequestPathExpr = $this->_getRequestPathExpr(self::ENTITY_CATEGORY);
         $productRequestPathExpr = $this->_getRequestPathExpr(self::ENTITY_PRODUCT);
         
@@ -1659,6 +1705,9 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             ) 
         );
         
+        $this->_finalizeRowsUpdate(self::REWRITE);
+        
+        $this->commit();
         return $this;
     }
     
@@ -1757,10 +1806,10 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     {
         $this
             ->_generateTransliterateData()
-            ->clearInvalidRewrites()
-            ->_importFromRewrite()
             ->_generateCategoryRequestPathIndex()
             ->_generateProductRequestPathIndex()
+            ->clearInvalidRewrites()
+            ->_importFromRewrite()
             ->_importFromCategoryRequestPath()
             ->_importFromProductRequestPath()
             ->_updateRewrites();
@@ -1776,9 +1825,10 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     {
         $this
             ->_generateTransliterateData(true)
-            ->_importFromRewrite()
             ->_generateCategoryRequestPathIndex($cateoryIds)
             ->_generateProductRequestPathIndex($cateoryIds)
+            ->clearInvalidRewrites()
+            ->_importFromRewrite()
             ->_importFromCategoryRequestPath()
             ->_importFromProductRequestPath()
             ->_updateRewrites();
@@ -1797,8 +1847,9 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     {
         $this
             ->_generateTransliterateData(true)
-            ->_importFromRewrite()
             ->_generateProductRequestPathIndex($categoryIds, $productIds)
+            ->_clearInvalidProductRewrites()
+            ->_importFromRewrite()
             ->_importFromProductRequestPath()
             ->_updateRewrites();
         return $this;
