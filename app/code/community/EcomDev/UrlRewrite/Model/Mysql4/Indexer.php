@@ -1187,7 +1187,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             ->reset()
             ->from(array('rewrite' => $this->getTable('core/url_rewrite')), 'url_rewrite_id')
             ->joinLeft(
-                array('product_category' => $this->getTable('core/website')), 
+                array('product_category' => $this->getTable('catalog/category_product')), 
                 'product_category.category_id =  rewrite.category_id '
                 . ' AND product_category.product_id = rewrite.product_id'
             )
