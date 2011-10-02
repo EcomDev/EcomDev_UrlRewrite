@@ -1167,7 +1167,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             )
             ->joinLeft(
                 array('product_website' => $this->getTable('core/website')), 
-                'product_website.website_id =  store.website_id AND '
+                'product_website.website_id =  store.website_id '
                 . ' AND product_website.product_id = rewrite.product_id'
             )
             // If product is not assigned to a website where url rewrite is. 
@@ -1188,7 +1188,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             ->from(array('rewrite' => $this->getTable('core/url_rewrite')), 'url_rewrite_id')
             ->joinLeft(
                 array('product_category' => $this->getTable('core/website')), 
-                'product_category.category_id =  rewrite.category_id AND '
+                'product_category.category_id =  rewrite.category_id '
                 . ' AND product_category.product_id = rewrite.product_id'
             )
             // If product is not assigned to a category where url rewrite is. 
