@@ -212,6 +212,7 @@ $table
         array('nullable' => false)
     )
     ->addIndex('IDX_STORE_ID_PATH', array('store_id', 'id_path'))
+    ->addIndex('IDX_STORE_DUPLICATE_KEY', array('store_id', 'duplicate_key'))
     ->setOption('collate', null);
 
 $this->getConnection()->createTable($table);

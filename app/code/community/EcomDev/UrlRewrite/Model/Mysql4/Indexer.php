@@ -1708,16 +1708,25 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $categoryRequestPathExpr = $this->_getRequestPathExpr(self::ENTITY_CATEGORY);
         $productRequestPathExpr = $this->_getRequestPathExpr(self::ENTITY_PRODUCT);
         
+        $originalRequestPathExpr = 'IFNULL(request_path, original_request_path)';
+        $requestPathExpr = 'IF(product_id IS NULL, ' 
+                         . $categoryRequestPathExpr . ', ' 
+                         . $productRequestPathExpr . ')';
+        
         $this->_getIndexAdapter()->update(
             $this->getTable(self::REWRITE),
            array(
                 'original_request_path' => new Zend_Db_Expr(
-                    'IFNULL(request_path, original_request_path)'
+                    $originalRequestPathExpr
                  ),
                 'request_path' => new Zend_Db_Expr(
-                    'IF(product_id IS NULL, ' 
-                    . $categoryRequestPathExpr . ', '
-                    . $productRequestPathExpr . ')'
+                    $requestPathExpr
+                ),
+                // Only update changed rows in core url rewrite
+                'updated' => new Zend_Db_Expr(
+                    $originalRequestPathExpr . ' IS NULL ' 
+                    . 'OR  ' . $originalRequestPathExpr .  ' = ' 
+                    . $requestPathExpr
                 )
             ),
             array(

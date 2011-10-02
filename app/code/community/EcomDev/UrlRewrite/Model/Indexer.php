@@ -70,6 +70,7 @@ class EcomDev_UrlRewrite_Model_Indexer extends Mage_Catalog_Model_Indexer_Url
         $data = $event->getNewData();
         if (!empty($data['catalog_url_reindex_all'])) {
             $this->reindexAll();
+            return $this;
         }
 
         // Force rewrites history saving
@@ -83,6 +84,7 @@ class EcomDev_UrlRewrite_Model_Indexer extends Mage_Catalog_Model_Indexer_Url
         }
         
         $this->_getResource()->resetSaveHistory();
+        return $this;
     }
 
     /**
