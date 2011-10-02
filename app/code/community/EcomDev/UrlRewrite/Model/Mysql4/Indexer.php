@@ -1647,7 +1647,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $select->reset()
             ->from(
                 array('duplicate' => $this->getTable(self::DUPLICATE_INCREMENT)),
-                'duplicate_id'
+                array('store_id', 'duplicate_key')
             )
             ->join(
                 array('rewrite' => $this->getTable(self::REWRITE)), 
@@ -1658,7 +1658,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                  array('min_duplicate' => $this->getTable(self::DUPLICATE_INCREMENT)), 
                  'min_duplicate.store_id = duplicate.store_id AND min_duplicate.duplicate_key = duplicate.duplicate_key',
                  array('min_duplicate_id' => new Zend_Db_Expr('MIN(min_duplicate.duplicate_id)'))
-            )->group('duplicate.duplicate_id');
+            )->group(array('duplicate.store_id', 'duplicate.duplicate_key'));
 
         $this->_getIndexAdapter()->query(
             $select->insertIgnoreFromSelect(
@@ -1681,8 +1681,9 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             )
             ->join(
                 array('aggregate' => $this->getTable(self::DUPLICATE_AGGREGATE)),
-                'aggregate.duplicate_id = duplicate_increment.duplicate_id', 
-                $columns
+                'aggregate.store_id = duplicate_increment.store_id ' 
+                . 'AND aggregate.duplicate_key = duplicate_increment.duplicate_key',
+                array()
             );
 
         $this->_getIndexAdapter()->query(
