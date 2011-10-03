@@ -1604,7 +1604,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 array('rewrite' => $this->getTable(self::REWRITE)),
                 array()
             )
-            ->joinLeft(
+            ->join(
                 array('duplicate' => $this->getTable(self::REWRITE)),
                 'duplicate.store_id = rewrite.store_id ' 
                 . ' AND duplicate.duplicate_key = rewrite.duplicate_key'
@@ -1612,9 +1612,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 array()
             )
             ->where('rewrite.updated = ?', 1)
-            // Second condition for request path values that have digits in the end
-            ->where('duplicate.id_path IS NOT NULL OR rewrite.duplicate_index = ?', 0)
-            ->where('rewrite.duplicate_index IS NULL OR rewrite.duplicate_index = ?', 0)
+            ->where('rewrite.duplicate_index IS NULL', 0)
             ->group(array('rewrite.store_id', 'rewrite.id_path'));
          
         $columns = array(
@@ -1632,6 +1630,22 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 $this->_getColumnsFromSelect($select)
             )
         );
+        
+        $select->reset(Varien_Db_Select::FROM)
+            ->reset(Varien_Db_Select::WHERE)
+            ->from(
+                array('rewrite' => $this->getTable(self::REWRITE)),
+                array()
+            )
+            ->where('rewrite.updated = ?', 1)
+            ->where('rewrite.duplicate_index = ?', 0);
+        
+        $result = $this->_getWriteAdapter()->query(
+            $select->insertIgnoreFromSelect(
+                $this->getTable(self::DUPLICATE), 
+                $this->_getColumnsFromSelect($select)
+            )
+        ); 
          
         $select->reset()
             ->from($this->getTable(self::DUPLICATE), array('store_id', 'id_path', 'duplicate_key'))

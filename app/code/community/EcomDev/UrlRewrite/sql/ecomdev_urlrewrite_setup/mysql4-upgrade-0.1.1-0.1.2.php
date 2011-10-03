@@ -48,4 +48,10 @@ $table
 
 $this->getConnection()->createTable($table);
 
+$this->getConnection()->addKey(
+    $this->getTable('ecomdev_urlrewrite/rewrite'),
+    'IDX_STORE_REQ_PATH_DUPLICATE',
+    array('store_id', 'duplicate_key', 'duplicate_index')
+);
+
 $this->endSetup();
