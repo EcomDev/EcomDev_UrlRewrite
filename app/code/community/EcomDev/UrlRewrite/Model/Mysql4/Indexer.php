@@ -1660,18 +1660,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             
         $select->reset()
             ->from(
-                array('duplicate' => $this->getTable(self::DUPLICATE_INCREMENT)),
-                array('store_id', 'duplicate_key')
-            )
-            ->join(
                 array('rewrite' => $this->getTable(self::REWRITE)), 
-                'rewrite.store_id = duplicate.store_id AND rewrite.duplicate_key = duplicate.duplicate_key',
-                array('max_index' => new Zend_Db_Expr('IFNULL(MAX(rewrite.duplicate_index), 0)'))
-            )
-            ->join(
-                 array('min_duplicate' => $this->getTable(self::DUPLICATE_INCREMENT)), 
-                 'min_duplicate.store_id = duplicate.store_id AND min_duplicate.duplicate_key = duplicate.duplicate_key',
-                 array('min_duplicate_id' => new Zend_Db_Expr('MIN(min_duplicate.duplicate_id)'))
+                array('store_id', 'duplicate_key', 'max_index' => new Zend_Db_Expr('IFNULL(MAX(rewrite.duplicate_index), 0)'))
             )->group(array('duplicate.store_id', 'duplicate.duplicate_key'));
 
         $this->_getIndexAdapter()->query(
@@ -1680,6 +1670,19 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 $this->_getColumnsFromSelect($select)
             )
         );
+        
+        $select->reset()
+            ->from(
+                 array('min_duplicate' => $this->getTable(self::DUPLICATE_INCREMENT)), 
+                 array('min_duplicate_id' => new Zend_Db_Expr('MIN(min_duplicate.duplicate_id)'))
+            )
+            ->where('min_duplicate.store_id = store_id')
+            ->where('min_duplicate.duplicate_key = duplicate_key');
+            
+       $this->_getIndexAdapter()->update(
+           $this->getTable(self::DUPLICATE_AGGREGATE),
+           array('min_duplicate_id' => new Zend_Db_Expr('(' . $select . ')'))
+       );
 
         $columns = array(
             'duplicate_index' => new Zend_Db_Expr( 
