@@ -25,4 +25,10 @@ $this->getConnection()->addColumn(
     'INT(10) UNSIGNED NOT NULL DEFAULT \'0\''
 );
 
+$this->getConnection()->addKey(
+    $this->getTable('ecomdev_urlrewrite/rewrite'),
+    'IDX_STORE_REQ_PATH_DUPLICATE',
+    array('store_id', 'duplicate_key', 'id_path')
+);
+
 $this->endSetup();
