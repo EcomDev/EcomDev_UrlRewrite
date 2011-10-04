@@ -1695,15 +1695,22 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         
         $select->reset()
             ->join(
-                array('duplicate_increment' => $this->getTable(self::DUPLICATE_INCREMENT)),
-                'duplicate_increment.store_id = duplicate.store_id AND duplicate_increment.id_path = duplicate.id_path', 
-                $columns
-            )
-            ->join(
                 array('aggregate' => $this->getTable(self::DUPLICATE_AGGREGATE)),
-                'aggregate.store_id = duplicate.store_id ' 
-                . 'AND aggregate.duplicate_key = duplicate.duplicate_key',
-                array()
+                'aggregate.store_id = duplicate_increment.store_id ' 
+                . 'AND aggregate.duplicate_key = duplicate_increment.duplicate_key',
+                $columns
+            );
+
+        $this->_getIndexAdapter()->query(
+            $select->crossUpdateFromSelect(array('duplicate_increment' => $this->getTable(self::DUPLICATE_INCREMENT)))
+        );
+        
+        $select->reset()
+            ->join(
+                array('duplicate_increment' => $this->getTable(self::DUPLICATE_INCREMENT)),
+                'duplicate_increment.store_id = duplicate.store_id ' 
+                . 'AND duplicate_increment.id_path = duplicate.id_path',
+                'duplicate_index'
             );
 
         $this->_getIndexAdapter()->query(
