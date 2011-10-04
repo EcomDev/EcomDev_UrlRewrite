@@ -1598,8 +1598,9 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     {
         $select = $this->_getIndexAdapter()->select();
         
-        // Preparing data for walking data
+        // Preparing data for duplicates table
         $select
+            ->distinct(true)
             ->from(
                 array('rewrite' => $this->getTable(self::REWRITE)),
                 array()
@@ -1612,8 +1613,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 array()
             )
             ->where('rewrite.updated = ?', 1)
-            ->where('rewrite.duplicate_index IS NULL', 0)
-            ->group(array('rewrite.store_id', 'rewrite.id_path'));
+            ->where('rewrite.duplicate_index IS NULL', 0);
          
         $columns = array(
              'store_id' => 'rewrite.store_id',
