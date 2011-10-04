@@ -1662,7 +1662,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             ->from(
                 array('rewrite' => $this->getTable(self::REWRITE)), 
                 array('store_id', 'duplicate_key', 'max_index' => new Zend_Db_Expr('IFNULL(MAX(rewrite.duplicate_index), 0)'))
-            )->group(array('duplicate.store_id', 'duplicate.duplicate_key'));
+            )->group(array('rewrite.store_id', 'rewrite.duplicate_key'));
 
         $this->_getIndexAdapter()->query(
             $select->insertIgnoreFromSelect(
