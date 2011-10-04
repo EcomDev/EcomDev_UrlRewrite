@@ -1368,6 +1368,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             )            
             ->where('rewrite.updated=?', 1)
             ->where('rewrite.duplicate_index IS NULL')
+            ->where('rewrite.product_id IS NULL')
             ->where('rewrite.duplicate_key REGEXP ?', '^[0-9a-z\\-]+-[0-9]+$');
             
         $columns = array(
