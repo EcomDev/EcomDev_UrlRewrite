@@ -1368,7 +1368,6 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             )            
             ->where('rewrite.updated=?', 1)
             ->where('rewrite.duplicate_index IS NULL')
-            ->where('rewrite.product_id IS NULL')
             ->where('rewrite.duplicate_key REGEXP ?', '^[0-9a-z\\-]+-[0-9]+$');
             
         $columns = array(
@@ -1675,22 +1674,25 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $select->reset()
             ->from(
                  array('min_duplicate' => $this->getTable(self::DUPLICATE_INCREMENT)), 
-                 array('min_duplicate_id' => new Zend_Db_Expr('MIN(min_duplicate.duplicate_id)'))
+                 array('store_id', 'duplicate_key', 'min_duplicate_id' => new Zend_Db_Expr('MIN(min_duplicate.duplicate_id)'))
+            );
+
+       $select->group(array('min_duplicate.store_id', 'min_duplicate.duplicate_key'));
+       
+       // Changed because of issues with duplicate index calculations
+       $this->_getIndexAdapter()->query(
+            $select->insertFromSelect(
+                $this->getTable(self::DUPLICATE_AGGREGATE), 
+                $this->_getColumnsFromSelect($select)
             )
-            ->where('min_duplicate.store_id = store_id')
-            ->where('min_duplicate.duplicate_key = duplicate_key');
-            
-       $this->_getIndexAdapter()->update(
-           $this->getTable(self::DUPLICATE_AGGREGATE),
-           array('min_duplicate_id' => new Zend_Db_Expr('(' . $select . ')'))
-       );
+        );
 
         $columns = array(
             'duplicate_index' => new Zend_Db_Expr( 
                 'aggregate.max_index + 1 + duplicate_increment.duplicate_id - aggregate.min_duplicate_id'
             )
         );
-         
+        
         $select->reset()
             ->join(
                 array('duplicate_increment' => $this->getTable(self::DUPLICATE_INCREMENT)),
@@ -1727,7 +1729,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $categoryRequestPathExpr = $this->_getRequestPathExpr(self::ENTITY_CATEGORY);
         $productRequestPathExpr = $this->_getRequestPathExpr(self::ENTITY_PRODUCT);
         
-        $originalRequestPathExpr = 'IFNULL(request_path, original_request_path)';
+        $originalRequestPathExpr = $this->_quoteInto('IF(request_path = ?, original_request_path, request_path)', '');
         $requestPathExpr = 'IF(product_id IS NULL, ' 
                          . $categoryRequestPathExpr . ', ' 
                          . $productRequestPathExpr . ')';
@@ -1785,6 +1787,23 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             ) 
         );
         
+        $select
+            ->reset()
+            ->join(
+                array('core_rewrite' => $this->getTable('core/url_rewrite')),
+                'core_rewrite.store_id = rewrite.store_id AND core_rewrite.id_path = rewrite.id_path',
+                array(
+                    'rewrite_id' => 'url_rewrite_id'
+                )
+            )
+            ->where('rewrite.rewrite_id IS NULL');
+        
+        $this->_getIndexAdapter()->query(
+            $select->crossUpdateFromSelect(
+                array('rewrite' => $this->getTable(self::REWRITE))
+            )
+        );
+
         $this->_finalizeRowsUpdate(self::REWRITE);
         
         $this->commit();
