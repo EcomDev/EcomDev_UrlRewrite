@@ -31,6 +31,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     const PRODUCT_REQUEST_PATH = 'product_request_path';
     const REWRITE = 'rewrite';
     const DUPLICATE = 'duplicate';
+    const DUPLICATE_UPDATED = 'duplicate_updated';
+    const DUPLICATE_KEY = 'duplicate_key';
     const DUPLICATE_INCREMENT = 'duplicate_increment';
     const DUPLICATE_AGGREGATE = 'duplicate_aggregate';
 
@@ -105,6 +107,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             self::PRODUCT_REQUEST_PATH => '',
             self::REWRITE => '',
             self::DUPLICATE => '',
+            self::DUPLICATE_UPDATED => '',
+            self::DUPLICATE_KEY => '',
             self::DUPLICATE_INCREMENT => '',
             self::DUPLICATE_AGGREGATE => ''
         );
@@ -183,6 +187,16 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     }
     
     /**
+     * Creates a new extended select instance
+     * 
+     * @return EcomDev_UrlRewrite_Model_Mysql4_Select
+     */
+    protected function _select()
+    {
+        return Mage::getResourceModel('ecomdev_urlrewrite/select', array($this->_getIndexAdapter()));
+    }
+    
+    /**
      * Check that character is unicode single char.
      * Should not translate chars combination in tranlstate source
      * 
@@ -210,7 +224,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             if (!$checkIfEmpty) {
                 $this->_getIndexAdapter()->delete($this->getTable(self::TRANSLITERATE));
             } else {
-                $select = $this->_getIndexAdapter()->select();
+                $select = $this->_select();
                 $numberOfRows = $this->_getIndexAdapter()->fetchOne(
                     $select->from($this->getTable(self::TRANSLITERATE), 'COUNT(character_to)')
                 );
@@ -246,37 +260,16 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     }
     
     /**
-     * Retrieves list of columns from select object
-     * 
-     * @param Varien_Db_Select $select
-     * @return array
-     */
-    protected function _getColumnsFromSelect(Varien_Db_Select $select)
-    {
-        $rawColumns = $select->getPart(Varien_Db_Select::COLUMNS);
-        $columns = array();
-        foreach ($rawColumns as $columnEntry) {
-            list(, $column, $alias) = $columnEntry;
-            if (empty($alias)) {
-                $alias = $column;
-            }
-            $columns[] = $alias;
-        }
-        
-        return $columns;
-    }
-    
-    /**
      * Prepares category url key select
      * 
-     * @return Varien_Db_Select
+     * @return EcomDev_UrlRewrite_Model_Mysql4_Select
      */
     protected function _getCategoryUrlKeySelect()
     {
         $urlKeyAttribute = $this->_getEavConfig()->getAttribute(self::ENTITY_CATEGORY, 'url_key');
         $nameAttribute = $this->_getEavConfig()->getAttribute(self::ENTITY_CATEGORY, 'name');
         
-        $select = $this->_getIndexAdapter()->select();
+        $select = $this->_select();
         // Initialize tables for fullfilment of url key index for categories
         $select
             // Data should be generated for each store view
@@ -354,14 +347,14 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     /**
      * Prepares product url key select
      * 
-     * @return Varien_Db_Select
+     * @return EcomDev_UrlRewrite_Model_Mysql4_Select
      */
     protected function _getProductUrlKeySelect()
     {
         $urlKeyAttribute = $this->_getEavConfig()->getAttribute(self::ENTITY_PRODUCT, 'url_key');
         $nameAttribute = $this->_getEavConfig()->getAttribute(self::ENTITY_PRODUCT, 'name');
         
-        $select = $this->_getIndexAdapter()->select();
+        $select = $this->_select();
         // Initialize tables for fullfilment of url key index for categories
         $select
             ->from(array('product' => $this->getTable('catalog/product')), array())
@@ -440,11 +433,11 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     /**
      * Prepares category request path select
      * 
-     * @return Varien_Db_Select
+     * @return EcomDev_UrlRewrite_Model_Mysql4_Select
      */
     protected function _getCategoryRequestPathSelect()
     {
-        $select = $this->_getIndexAdapter()->select();
+        $select = $this->_select();
         
         // Initialize tables for fullfilment of request path index for categories
         $select
@@ -507,11 +500,11 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
      * Prepares product request path select
      * 
      * @param string $category category direct, category nested or root level rewrite?
-     * @return Varien_Db_Select
+     * @return EcomDev_UrlRewrite_Model_Mysql4_Select
      */
     protected function _getProductRequestPathSelect($category = false)
     {
-        $select = $this->_getIndexAdapter()->select();
+        $select = $this->_select();
         
         // Initialize tables for fullfilment of request path index for products
         if ($category !== false) {
@@ -561,7 +554,6 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         
         $idPathExprKey = ($category !==false ? self::ID_PATH_PRODUCT_CATEGORY : self::ID_PATH_PRODUCT);
         
-        
         $columns = array(
             'store_id' => 'url_key.store_id',
             'id_path' => new Zend_Db_Expr($this->_quoteInto(
@@ -602,7 +594,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     public function getRootCategories()
     {
         
-        $select = $this->_getReadAdapter()->select()
+        $select = $this->_select()
             ->from($this->getTable(self::ROOT_CATEGORY));
         
         return $this->_getReadAdapter()->fetchPairs($select);
@@ -616,9 +608,9 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     protected function _generateRootCategoryIndex()
     {
         $this->_getIndexAdapter()->truncate($this->getTable(self::ROOT_CATEGORY));
-        
-        $select = $this->_getWriteAdapter()->select();
-        
+
+        $select = $this->_select();
+
         $select
             ->from(array('store' => $this->getTable('core/store')), 'store_id')
             ->join(
@@ -634,7 +626,11 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 )))
             );
         
-        $this->insertFromSelect($select, $this->getTable(self::ROOT_CATEGORY), $this->_getColumnsFromSelect($select));
+        $this->insertFromSelect(
+            $select, 
+            $this->getTable(self::ROOT_CATEGORY), 
+            $select->getColumnAliases()
+        );
         return $this;
     }
     
@@ -672,7 +668,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
      */
     protected function _getRelatedCategoryIdsSelect(array $categoryIds, $type = self::RELATION_TYPE_NESTED)
     {
-        $select = $this->_getIndexAdapter()->select()
+        $select = $this->_select()
             ->from(array('relation' => $this->getTable(self::CATEGORY_RELATION)), 'related_id')
             ->where('relation.category_id IN(?)', $categoryIds)
             ->where('relation.type = ?', $type);
@@ -694,7 +690,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     protected function _generateCategoryRelationIndex(array $categoryIds = null)
     {
         if ($categoryIds !== null) {
-            $childSelect = $this->_getIndexAdapter()->select();
+            $childSelect = $this->_select();
             $childSelect
                 ->from(array('main' => $this->getTable('catalog/category')), array())
                 ->join(array('child' => $this->getTable('catalog/category')), 
@@ -727,7 +723,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         );
         
         // Generate nested categories index
-        $select = $this->_getIndexAdapter()->select();
+        $select = $this->_select();
         $select->from(array('main' => $this->getTable('catalog/category')), array('category_id' => 'entity_id'))
             ->join(array('child' => $this->getTable('catalog/category')), 
                    'child.path LIKE CONCAT(main.path, \'/%\')', 
@@ -749,7 +745,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this->_getIndexAdapter()->query(
             $select->insertFromSelect(
                 $this->getTable(self::CATEGORY_RELATION), 
-                array('category_id', 'related_id', 'type')
+                $select->getColumnAliases()
             )
         );
         
@@ -762,7 +758,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 array('relation' => $this->getTable(self::CATEGORY_RELATION)),
                 array(
                     'category_id', 'related_id',
-                    new Zend_Db_Expr($this->_quoteInto('?', self::RELATION_TYPE_ANCHOR))
+                    'type' => new Zend_Db_Expr($this->_quoteInto('?', self::RELATION_TYPE_ANCHOR))
                 )
             )
             ->join(
@@ -785,7 +781,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this->_getIndexAdapter()->query(
             $select->insertFromSelect(
                 $this->getTable(self::CATEGORY_RELATION), 
-                array('category_id', 'related_id', 'type')
+                $select->getColumnAliases()
             )
         );
         
@@ -810,7 +806,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             $categoryIds = array($categoryIds);
         }
         
-        $select = $this->_getIndexAdapter()->select()
+        $select = $this->_select()
             ->from($this->getTable(self::CATEGORY_REQUEST_PATH))
             ->where('category_id IN(?)', $categoryIds);
         
@@ -854,7 +850,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         
         $result = $this->_getIndexAdapter()->query($select->insertFromSelect(
             $this->getTable(self::CATEGORY_URL_KEY), 
-            $this->_getColumnsFromSelect($select)
+            $select->getColumnAliases()
         ));
         
         if ($result->rowCount()) {
@@ -936,7 +932,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this->_getIndexAdapter()->query(
             $select->insertFromSelect(
                 $this->getTable(self::CATEGORY_REQUEST_PATH), 
-                $this->_getColumnsFromSelect($select),
+                $select->getColumnAliases(),
                 false
             )
         );
@@ -965,7 +961,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             $productIds = array($productIds);
         }
         
-        $select = $this->_getIndexAdapter()->select()
+        $select = $this->_select()
             ->from($this->getTable(self::PRODUCT_REQUEST_PATH))
             ->where('product_id IN(?)', $productIds);
         
@@ -995,7 +991,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         
         $result = $this->_getIndexAdapter()->query($select->insertFromSelect(
             $this->getTable(self::PRODUCT_URL_KEY), 
-            $this->_getColumnsFromSelect($select)
+            $select->getColumnAliases()
         ));
         
         if ($result->rowCount()) {
@@ -1050,7 +1046,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         );
         if ($categoryIds !== null) {
             $categoryIds = $this->_getCategoryIds($categoryIds);
-            $conditionSelect = $this->_getIndexAdapter()->select();
+            $conditionSelect = $this->_select();
             $conditionSelect
                 ->from(
                     array('category_product' => $this->getTable('catalog/category_product')), 
@@ -1092,7 +1088,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             $this->_getIndexAdapter()->query(
                 $select->insertIgnoreFromSelect(
                     $this->getTable(self::PRODUCT_REQUEST_PATH),
-                    $this->_getColumnsFromSelect($select)
+                    $select->getColumnAliases()
                 )
             );
         }
@@ -1125,7 +1121,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
      */
     protected function _clearInvalidCategoryRewrites()
     {
-        $select = $this->_getIndexAdapter()->select();
+        $select = $this->_select();
         $select
             ->from(array('rewrite' => $this->getTable('core/url_rewrite')), 'url_rewrite_id')
             ->join(
@@ -1158,7 +1154,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
      */
     protected function _clearInvalidProductRewrites()
     {
-        $select = $this->_getIndexAdapter()->select();
+        $select = $this->_select();
         $select
             ->from(array('rewrite' => $this->getTable('core/url_rewrite')), 'url_rewrite_id')
             ->join(
@@ -1266,15 +1262,9 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
      */
     protected function _importFromRewrite()
     {
-        $select = $this->_getIndexAdapter()->select();
+        $select = $this->_select();
         $select
-            ->from(array('core_rewrite' => $this->getTable('core/url_rewrite')), array())
-            ->joinLeft(
-                array('rewrite_index' => $this->getTable(self::REWRITE)),
-                'rewrite_index.store_id = core_rewrite.store_id AND rewrite_index.id_path = core_rewrite.id_path',
-                array()
-            )
-            ->where('rewrite_index.store_id IS NULL');
+            ->from(array('core_rewrite' => $this->getTable('core/url_rewrite')), array());
 
         $suffixExpr = 'core_rewrite.request_path';
         
@@ -1307,10 +1297,9 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         );
         
         $this->_getIndexAdapter()->query(
-            $select->insertFromSelect(
+            $select->insertIgnoreFromSelect(
                 $this->getTable(self::REWRITE), 
-                $this->_getColumnsFromSelect($select),
-                false
+                $select->getColumnAliases()
             )
         );
         
@@ -1360,7 +1349,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
      */
     protected function _importDuplicatedKeys()
     {
-        $select = $this->_getIndexAdapter()->select();
+        $select = $this->_select();
         $select
             ->from(
                 array('rewrite' => $this->getTable(self::REWRITE)), 
@@ -1383,8 +1372,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             )),
             'duplicate_index' => new Zend_Db_Expr(
                 $this->_quoteInto('SUBSTRING_INDEX(rewrite.duplicate_key, ?, -1)', '-')
-            ),
-            'is_duplicate' => new Zend_Db_Expr('0')
+            )
         );
         
         $select->columns($columns);
@@ -1397,21 +1385,40 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $result = $this->_getIndexAdapter()->query(
             $select->insertIgnoreFromSelect(
                 $this->getTable(self::DUPLICATE), 
-                $this->_getColumnsFromSelect($select)
+                $select->getColumnAliases()
+            )
+        );
+        
+        // Genereate list of keys that are presented only ones,
+        // E.g. is not duplicates for removal of them later
+        $select->reset()
+            ->from(
+                $this->getTable(self::DUPLICATE),
+                array('store_id', 'duplicate_key')
+            )
+            ->group(array('store_id', 'duplicate_key'))
+            ->having('COUNT(*) = ?', 1);
+        
+        $this->_getIndexAdapter()->query(
+            $select->insertFromSelect(
+                $this->getTable(self::DUPLICATE_KEY),
+                $select->getColumnAliases(),
+                false
             )
         );
         
         $select->reset()
+            ->from(
+                array('duplicate' => $this->getTable(self::DUPLICATE))
+            )
             ->join(
-                array('duplicate' => $this->getTable(self::DUPLICATE)),
-                'duplicate.id_path != original.id_path'
-                . ' AND duplicate.store_id = original.store_id '
-                . ' AND duplicate.duplicate_key = original.duplicate_key ',
-                array('is_duplicate' => new Zend_Db_Expr('1'))
+                array('not_duplicate' => $this->getTable(self::DUPLICATE_KEY)),
+                'not_duplicate.store_id = duplicate.store_id ' 
+                . 'AND not_duplicate.duplicate_key = duplicate.duplicate_key'
             );
         
         $this->_getIndexAdapter()->query(
-            $select->crossUpdateFromSelect(array('original' => $this->getTable(self::DUPLICATE)))
+            $select->deleteFromSelect('duplicate')
         );
         
         $this->_updateRewriteDuplicates();
@@ -1426,7 +1433,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
      */
     protected function _updateRewriteDuplicates()
     {
-        $select = $this->_getIndexAdapter()->select();
+        $select = $this->_select();
         
         $columns = array(
             'duplicate_key' => 'duplicate_key',
@@ -1436,8 +1443,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $select->join(
             array('duplicate' => $this->getTable(self::DUPLICATE)),
             'duplicate.store_id = rewrite.store_id ' 
-            . 'AND duplicate.id_path = rewrite.id_path ' 
-            . 'AND duplicate.is_duplicate = 1',
+            . 'AND duplicate.id_path = rewrite.id_path ',
             $columns
         );
         
@@ -1458,18 +1464,21 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
      */
     protected function _importFromCategoryRequestPath()
     {
-        $select = $this->_getIndexAdapter()->select();
+        $select = $this->_select();
         $select
             ->from(
+                array('rewrite' => $this->getTable(self::REWRITE)),
+                array()
+            )
+            ->join(
                 array('request_path' => $this->getTable(self::CATEGORY_REQUEST_PATH)), 
+                'request_path.store_id = rewrite.store_id' 
+                . ' AND request_path.id_path = rewrite.id_path',
                 array()
             )
             ->where('request_path.updated = ?', 1);
         
         $columns = array(
-            'store_id'    => 'request_path.store_id',
-            'id_path'     => 'request_path.id_path',
-            'category_id' => 'request_path.category_id',
             'target_path' => new Zend_Db_Expr($this->_quoteInto(
                 sprintf(
                     $this->_pathGenerateExpr[self::TARGET_PATH_CATEGORY],
@@ -1478,13 +1487,46 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 self::TARGET_PATH_CATEGORY
             )),
             'duplicate_key' => 'request_path.request_path',
-            'duplicate_index' => new Zend_Db_Expr(
-                'IF(request_path.request_path REGEXP \'[0-9]$\', 0, NULL)'
-            ),
-            'updated' => new Zend_Db_Expr('1')
+            'duplicate_index' => new Zend_Db_Expr($this->_quoteInto(
+                'IF(rewrite.duplicate_index IS NOT NULL ' 
+                    . ' AND SUBSTRING_INDEX(rewrite.duplicate_key, ?, -1) = SUBSTRING_INDEX(request_path.request_path, ?, -1), '
+                    . ' rewrite.duplicate_index, '
+                    . ' IF(request_path.request_path REGEXP \'[0-9]$\', 0, NULL))',
+                '/'
+            )),
+            'updated' => new Zend_Db_Expr('1'),
+            // This one updated request path index
+            'request_path.updated' => new Zend_Db_Expr('0')
         );
         
         $select->columns($columns);
+        
+        Mage::dispatchEvent(
+           'ecomdev_urlrewrite_indexer_import_from_category_request_path_update',
+           array('select' => $select, 'columns' => $columns, 'resource' => $this)
+        );
+        
+        $select->crossUpdateFromSelectImproved();
+        
+        unset($columns['request_path.updated']);
+        
+        $columns['duplicate_index'] = new Zend_Db_Expr(
+            'IF(request_path.request_path REGEXP \'[0-9]$\', 0, NULL)'
+        );
+        
+        $columns = array(
+            'store_id'    => 'request_path.store_id',
+            'id_path'     => 'request_path.id_path',
+            'category_id' => 'request_path.category_id'
+        ) + $columns;
+        
+        $select->reset(Varien_Db_Select::FROM)
+            ->reset(Varien_Db_Select::COLUMNS)
+            ->from(
+                array('request_path' => $this->getTable(self::CATEGORY_REQUEST_PATH)), 
+                array()
+            )
+            ->columns($columns);
         
         Mage::dispatchEvent(
            'ecomdev_urlrewrite_indexer_import_from_category_request_path_insert',
@@ -1494,40 +1536,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this->_getIndexAdapter()->query(
             $select->insertIgnoreFromSelect(
                 $this->getTable(self::REWRITE), 
-                $this->_getColumnsFromSelect($select)
-            )
-        );
-        
-        unset($columns['store_id']);
-        unset($columns['id_path']);
-        unset($columns['category_id']);
-        
-        $columns['duplicate_index'] =  new Zend_Db_Expr($this->_quoteInto(
-            'IF(rewrite.duplicate_index IS NOT NULL ' 
-                . ' AND SUBSTRING_INDEX(rewrite.duplicate_key, ?, -1) = SUBSTRING_INDEX(request_path.request_path, ?, -1), '
-                . ' rewrite.duplicate_index, '
-                . ' IF(request_path.request_path REGEXP \'[0-9]$\', 0, NULL))',
-            '/'
-        ));
-        
-        $select->reset(Varien_Db_Select::FROM)
-            ->reset(Varien_Db_Select::COLUMNS)
-            ->join(
-                array('request_path' => $this->getTable(self::CATEGORY_REQUEST_PATH)), 
-                'request_path.store_id = rewrite.store_id' 
-                . ' AND request_path.id_path = rewrite.id_path',
-                array()
-            )
-            ->columns($columns);
-        
-        Mage::dispatchEvent(
-           'ecomdev_urlrewrite_indexer_import_from_category_request_path_update',
-           array('select' => $select, 'columns' => $columns, 'resource' => $this)
-        );
-        
-        $this->_getIndexAdapter()->query(
-            $select->crossUpdateFromSelect(
-                array('rewrite' => $this->getTable(self::REWRITE))
+                $select->getColumnAliases()
             )
         );
         
@@ -1542,6 +1551,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
      */
     protected function _importFromProductRequestPath()
     {
+        // Target path generation for product url without category
         $targetPathWithoutCategory = $this->_quoteInto(
             sprintf(
                 $this->_pathGenerateExpr[self::TARGET_PATH_PRODUCT], 
@@ -1550,6 +1560,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             self::TARGET_PATH_PRODUCT
         );
         
+        // Target path for generation of product url with category
         $targetPathWithCategory = $this->_quoteInto(
             sprintf(
                 $this->_pathGenerateExpr[self::TARGET_PATH_PRODUCT_CATEGORY],
@@ -1559,34 +1570,74 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             self::TARGET_PATH_PRODUCT_CATEGORY
         );
         
+        // Depending on value in category id field uses proper target path expression
         $targetPathExpr = new Zend_Db_Expr(sprintf(
             'IF(request_path.category_id IS NULL, %s, %s)',
             $targetPathWithoutCategory, 
             $targetPathWithCategory
         ));
         
-        $select = $this->_getIndexAdapter()->select();
+        // Update  records before inserting new ones
+        $select = $this->_select();
         $select
             ->from(
-                array('request_path' => $this->getTable(self::PRODUCT_REQUEST_PATH)), 
+                array('rewrite' => $this->getTable(self::REWRITE)),
+                array()
+            )
+            ->join(
+                array('request_path' => $this->getTable(self::PRODUCT_REQUEST_PATH)),
+                'request_path.store_id = rewrite.store_id' 
+                . ' AND request_path.id_path = rewrite.id_path', 
                 array()
             )
             ->where('request_path.updated = ?', 1);
 
         $columns = array(
-            'store_id'    => 'request_path.store_id',
-            'id_path'     => 'request_path.id_path',
-            'category_id' => 'request_path.category_id',
-            'product_id' => 'request_path.product_id',
-            'target_path' => $targetPathExpr,
             'duplicate_key' => 'request_path.request_path',
-            'duplicate_index' => new Zend_Db_Expr(
-                'IF(request_path.request_path REGEXP \'[0-9]$\', 0, NULL)'
-            ),
-            'updated' => new Zend_Db_Expr('1')
+            'duplicate_index' => new Zend_Db_Expr($this->_quoteInto(
+                'IF(rewrite.duplicate_index IS NOT NULL ' 
+                    . ' AND SUBSTRING_INDEX(rewrite.duplicate_key, ?, -1) = SUBSTRING_INDEX(request_path.request_path, ?, -1), '
+                    . ' rewrite.duplicate_index, '
+                    . ' IF(request_path.request_path REGEXP \'[0-9]$\', 0, NULL))',
+                '/'
+            )),
+            'target_path' => $targetPathExpr,
+            'updated' => new Zend_Db_Expr('1'),
+            // This one updated request path index
+            'request_path.updated' => new Zend_Db_Expr('0')
         );
         
         $select->columns($columns);
+        
+        Mage::dispatchEvent(
+           'ecomdev_urlrewrite_indexer_import_from_product_request_path_update',
+           array('select' => $select, 'columns' => $columns, 'resource' => $this)
+        );
+        
+
+        $select->crossUpdateFromSelectImproved();
+        
+        unset($columns['request_path.updated']);
+        
+        $columns['duplicate_index'] = new Zend_Db_Expr(
+            'IF(request_path.request_path REGEXP \'[0-9]$\', 0, NULL)'
+        );
+        
+        $columns = array(
+            'store_id'    => 'request_path.store_id',
+            'id_path'     => 'request_path.id_path',
+            'category_id' => 'request_path.category_id',
+            'product_id' => 'request_path.product_id'
+        ) + $columns;
+        
+        $select->reset(Varien_Db_Select::FROM)
+            ->reset(Varien_Db_Select::COLUMNS)
+            ->from(
+                array('request_path' => $this->getTable(self::PRODUCT_REQUEST_PATH)), 
+                array()
+            )
+            ->columns($columns);
+        
         
         Mage::dispatchEvent(
            'ecomdev_urlrewrite_indexer_import_from_product_request_path_insert',
@@ -1596,47 +1647,72 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this->_getIndexAdapter()->query(
             $select->insertIgnoreFromSelect(
                 $this->getTable(self::REWRITE), 
-                $this->_getColumnsFromSelect($select)
-            )
-        );
-        
-        unset($columns['store_id']);
-        unset($columns['id_path']);
-        unset($columns['category_id']);
-        
-        $columns['duplicate_index'] =  new Zend_Db_Expr($this->_quoteInto(
-            'IF(rewrite.duplicate_index IS NOT NULL ' 
-                . ' AND SUBSTRING_INDEX(rewrite.duplicate_key, ?, -1) = SUBSTRING_INDEX(request_path.request_path, ?, -1), '
-                . ' rewrite.duplicate_index, '
-                . ' IF(request_path.request_path REGEXP \'[0-9]$\', 0, NULL))',
-            '/'
-        ));
-        
-        $select->reset(Varien_Db_Select::FROM)
-            ->reset(Varien_Db_Select::COLUMNS)
-            ->join(
-                array('request_path' => $this->getTable(self::PRODUCT_REQUEST_PATH)), 
-                'request_path.store_id = rewrite.store_id' 
-                . ' AND request_path.id_path = rewrite.id_path',
-                array()
-            )
-            ->columns($columns);
-        
-        
-        Mage::dispatchEvent(
-           'ecomdev_urlrewrite_indexer_import_from_product_request_path_update',
-           array('select' => $select, 'columns' => $columns, 'resource' => $this)
-        );
-        
-        $this->_getIndexAdapter()->query(
-            $select->crossUpdateFromSelect(
-                array('rewrite' => $this->getTable(self::REWRITE)), 
-                $this->_getColumnsFromSelect($select)
+                $select->getColumnAliases()
             )
         );
         
         $this->_finalizeRowsUpdate(self::PRODUCT_REQUEST_PATH);
         return $this;
+    }
+    
+    /**
+     * This operation prepares data for duplicates resolving
+     *
+     * First of all it fullfils information about records 
+     * with updated keys (duplicate_updated), then based on it generates records that 
+     * are real duplicates into duplicate_key table 
+     * 
+     * @return EcomDev_UrlRewrite_Model_Mysql4_Indexer
+     */
+    protected function _updateDuplicatedKeysInformation()
+    {
+        $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_KEY));
+        $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_UPDATED));
+        
+        $select = $this->_select();
+        
+        // Selecting all updated records with duplicate key
+        $select
+            ->from(
+                $this->getTable(self::REWRITE),
+                array('store_id', 'duplicate_key')
+            )
+            ->where('updated = ?', 1)
+            ->group(array('store_id', 'duplicate_key'));
+        
+        $this->_getIndexAdapter()->query(
+            $select->insertFromSelect(
+                $this->getTable(self::DUPLICATE_UPDATED), 
+                $select->getColumnAliases(),
+                false
+            )
+        );
+        
+        // Saving only real duplicates into dulplicate_key table
+        $select
+            ->reset()
+            ->from(
+                array('duplicate_updated' => $this->getTable(self::DUPLICATE_UPDATED)),
+                array('store_id', 'duplicate_key')
+            )
+            ->join(
+                array('rewrite' => $this->getTable(self::REWRITE)),
+                'rewrite.store_id = duplicate_updated.store_id ' 
+                . 'AND rewrite.duplicate_key =  duplicate_updated.duplicate_key',
+                array()
+            )
+            ->group(array('duplicate_updated.store_id', 'duplicate_updated.duplicate_key'))
+            ->having('COUNT(*) > ?', 1);
+        
+        $this->_getIndexAdapter()->query(
+            $select->insertFromSelect(
+                $this->getTable(self::DUPLICATE_KEY), 
+                $select->getColumnAliases(),
+                false
+            )
+        );
+        
+        $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_UPDATED));
     }
     
     /**
@@ -1646,24 +1722,23 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
      */
     protected function _resolveDuplicates()
     {
-        $select = $this->_getIndexAdapter()->select();
+        $this->_updateDuplicatedKeysInformation();
+        $select = $this->_select();
         
         // Preparing data for duplicates table
         $select
-            ->distinct(true)
             ->from(
                 array('rewrite' => $this->getTable(self::REWRITE)),
                 array()
             )
             ->join(
-                array('duplicate' => $this->getTable(self::REWRITE)),
+                array('duplicate' => $this->getTable(self::DUPLICATE_KEY)),
                 'duplicate.store_id = rewrite.store_id ' 
-                . ' AND duplicate.duplicate_key = rewrite.duplicate_key'
-                . ' AND duplicate.id_path != rewrite.id_path',
+                . ' AND duplicate.duplicate_key = rewrite.duplicate_key',
                 array()
             )
             ->where('rewrite.updated = ?', 1)
-            ->where('rewrite.duplicate_index IS NULL', 0);
+            ->where('rewrite.duplicate_index IS NULL');
          
         $columns = array(
              'store_id' => 'rewrite.store_id',
@@ -1677,7 +1752,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $result = $this->_getWriteAdapter()->query(
             $select->insertIgnoreFromSelect(
                 $this->getTable(self::DUPLICATE), 
-                $this->_getColumnsFromSelect($select)
+                $select->getColumnAliases()
             )
         );
         
@@ -1693,9 +1768,9 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $result = $this->_getWriteAdapter()->query(
             $select->insertIgnoreFromSelect(
                 $this->getTable(self::DUPLICATE), 
-                $this->_getColumnsFromSelect($select)
+                $select->getColumnAliases()
             )
-        ); 
+        );
          
         $select->reset()
             ->from($this->getTable(self::DUPLICATE), array('store_id', 'id_path', 'duplicate_key'))
@@ -1704,7 +1779,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this->_getIndexAdapter()->query(
             $select->insertIgnoreFromSelect(
                 $this->getTable(self::DUPLICATE_INCREMENT), 
-                $this->_getColumnsFromSelect($select)
+                $select->getColumnAliases()
             )
         );
             
@@ -1717,7 +1792,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this->_getIndexAdapter()->query(
             $select->insertIgnoreFromSelect(
                 $this->getTable(self::DUPLICATE_AGGREGATE), 
-                $this->_getColumnsFromSelect($select)
+                $select->getColumnAliases()
             )
         );
         
@@ -1733,7 +1808,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
        $this->_getIndexAdapter()->query(
             $select->insertFromSelect(
                 $this->getTable(self::DUPLICATE_AGGREGATE), 
-                $this->_getColumnsFromSelect($select)
+                $select->getColumnAliases()
             )
         );
 
@@ -1815,7 +1890,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         
         $this->_saveUrlHistory();
         
-        $select = $this->_getIndexAdapter()->select();
+        $select = $this->_select();
         $select->from($this->getTable(self::REWRITE), array())
             ->where('updated = ?', 1);
 
@@ -1840,7 +1915,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this->_getIndexAdapter()->query(
             $select->insertFromSelect(
                 $this->getTable('core/url_rewrite'), 
-                $this->_getColumnsFromSelect($select)
+                $select->getColumnAliases()
             ) 
         );
         
@@ -1922,7 +1997,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             return $this;
         }
         
-        $select = $this->_getIndexAdapter()->select();
+        $select = $this->_select();
         $select->from($this->getTable(self::REWRITE), array())
             ->where('original_request_path != request_path')
             ->where('store_id IN(?)', $storeIds)
@@ -1946,7 +2021,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this->_getIndexAdapter()->query(
             $select->insertFromSelect(
                 $this->getTable(self::REWRITE), 
-                $this->_getColumnsFromSelect($select)
+                $select->getColumnAliases()
             )
         );
         

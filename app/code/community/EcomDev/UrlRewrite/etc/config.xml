@@ -20,7 +20,7 @@
 <config>
     <modules>
         <EcomDev_UrlRewrite>
-            <version>0.1.3</version>
+            <version>0.1.4</version>
         </EcomDev_UrlRewrite>
     </modules>
     <global>
@@ -53,6 +53,12 @@
                     <duplicate>
                         <table>ecomdev_urlrewrite_duplicate</table>
                     </duplicate>
+                    <duplicate_updated>
+                        <table>ecomdev_urlrewrite_duplicate_updated</table>
+                    </duplicate_updated>
+                    <duplicate_key>
+                        <table>ecomdev_urlrewrite_duplicate_key</table>
+                    </duplicate_key>
                     <duplicate_increment>
                         <table>ecomdev_urlrewrite_duplicate_increment</table>
                     </duplicate_increment>
