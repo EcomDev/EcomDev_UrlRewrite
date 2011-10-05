@@ -1464,19 +1464,12 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 array('request_path' => $this->getTable(self::CATEGORY_REQUEST_PATH)), 
                 array()
             )
-            ->joinLeft(
-                array('rewrite' => $this->getTable(self::REWRITE)), 
-                'rewrite.store_id = request_path.store_id' 
-                . ' AND rewrite.id_path = request_path.id_path', 
-                array()
-            )
             ->where('request_path.updated = ?', 1);
         
         $columns = array(
             'store_id'    => 'request_path.store_id',
             'id_path'     => 'request_path.id_path',
             'category_id' => 'request_path.category_id',
-            'rewrite_id'  => 'rewrite.rewrite_id',
             'target_path' => new Zend_Db_Expr($this->_quoteInto(
                 sprintf(
                     $this->_pathGenerateExpr[self::TARGET_PATH_CATEGORY],
@@ -1485,20 +1478,57 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 self::TARGET_PATH_CATEGORY
             )),
             'duplicate_key' => 'request_path.request_path',
-            'duplicate_index' => new Zend_Db_Expr($this->_quoteInto(
-                'IF(rewrite.duplicate_index IS NOT NULL ' 
-                    . ' AND SUBSTRING_INDEX(rewrite.duplicate_key, ?, -1) = SUBSTRING_INDEX(request_path.request_path, ?, -1), '
-                    . ' rewrite.duplicate_index, '
-                    . ' IF(request_path.request_path REGEXP \'[0-9]$\', 0, NULL))',
-                '/'
-            )),
+            'duplicate_index' => new Zend_Db_Expr(
+                'IF(request_path.request_path REGEXP \'[0-9]$\', 0, NULL)'
+            ),
             'updated' => new Zend_Db_Expr('1')
         );
         
         $select->columns($columns);
         
+        Mage::dispatchEvent(
+           'ecomdev_urlrewrite_indexer_import_from_category_request_path_insert',
+           array('select' => $select, 'columns' => $columns, 'resource' => $this)
+        );
+        
         $this->_getIndexAdapter()->query(
-            $select->insertFromSelect($this->getTable(self::REWRITE), array_keys($columns))
+            $select->insertIgnoreFromSelect(
+                $this->getTable(self::REWRITE), 
+                $this->_getColumnsFromSelect($select)
+            )
+        );
+        
+        unset($columns['store_id']);
+        unset($columns['id_path']);
+        unset($columns['category_id']);
+        
+        $columns['duplicate_index'] =  new Zend_Db_Expr($this->_quoteInto(
+            'IF(rewrite.duplicate_index IS NOT NULL ' 
+                . ' AND SUBSTRING_INDEX(rewrite.duplicate_key, ?, -1) = SUBSTRING_INDEX(request_path.request_path, ?, -1), '
+                . ' rewrite.duplicate_index, '
+                . ' IF(request_path.request_path REGEXP \'[0-9]$\', 0, NULL))',
+            '/'
+        ));
+        
+        $select->reset(Varien_Db_Select::FROM)
+            ->reset(Varien_Db_Select::COLUMNS)
+            ->join(
+                array('request_path' => $this->getTable(self::CATEGORY_REQUEST_PATH)), 
+                'request_path.store_id = rewrite.store_id' 
+                . ' AND request_path.id_path = rewrite.id_path',
+                array()
+            )
+            ->columns($columns);
+        
+        Mage::dispatchEvent(
+           'ecomdev_urlrewrite_indexer_import_from_category_request_path_update',
+           array('select' => $select, 'columns' => $columns, 'resource' => $this)
+        );
+        
+        $this->_getIndexAdapter()->query(
+            $select->crossUpdateFromSelect(
+                array('rewrite' => $this->getTable(self::REWRITE))
+            )
         );
         
         $this->_finalizeRowsUpdate(self::CATEGORY_REQUEST_PATH);
@@ -1512,75 +1542,95 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
      */
     protected function _importFromProductRequestPath()
     {
-        // Import store root records first
-        $select = $this->_getIndexAdapter()->select();
-        $select
-            ->from(
-                array('request_path' => $this->getTable(self::PRODUCT_REQUEST_PATH)), 
-                array()
-            )
-            ->joinLeft(
-                array('rewrite' => $this->getTable(self::REWRITE)), 
-                'rewrite.store_id = request_path.store_id' 
-                . ' AND rewrite.id_path = request_path.id_path ',
-                array()
-            )
-            ->where('request_path.updated = ?', 1)
-            ->where('request_path.category_id IS NULL');
-
-        $columns = array(
-            'store_id'    => 'request_path.store_id',
-            'id_path'     => 'id_path',
-            'category_id' => 'request_path.category_id',
-            'product_id' => 'request_path.product_id',
-            'rewrite_id'  => 'rewrite.rewrite_id',
-            'target_path' => new Zend_Db_Expr($this->_quoteInto(
-                sprintf(
-                    $this->_pathGenerateExpr[self::TARGET_PATH_PRODUCT], 
-                    'request_path.product_id'
-                ),
-                self::TARGET_PATH_PRODUCT
-            )),
-            'duplicate_key' => 'request_path.request_path',
-            'duplicate_index' => new Zend_Db_Expr($this->_quoteInto(
-                'IF(rewrite.duplicate_index IS NOT NULL ' 
-                    . ' AND SUBSTRING_INDEX(rewrite.duplicate_key, ?, -1) = SUBSTRING_INDEX(request_path.request_path, ?, -1), '
-                    . ' rewrite.duplicate_index, '
-                    . ' IF(request_path.request_path REGEXP \'[0-9]$\', 0, NULL))',
-                '/'
-            )),
-            'updated' => new Zend_Db_Expr('1')
+        $targetPathWithoutCategory = $this->_quoteInto(
+            sprintf(
+                $this->_pathGenerateExpr[self::TARGET_PATH_PRODUCT], 
+                'request_path.product_id'
+            ),
+            self::TARGET_PATH_PRODUCT
         );
         
-        $select->columns($columns);
-        
-        $this->_getIndexAdapter()->query(
-            $select->insertFromSelect(
-                $this->getTable(self::REWRITE), 
-                $this->_getColumnsFromSelect($select)
-            )
-        );
-        
-        // Import product and category url rewrite pair
-        $select->reset(Varien_Db_Select::WHERE)
-            ->reset(Varien_Db_Select::COLUMNS)
-            ->where('request_path.updated = ?', 1)
-            ->where('request_path.category_id IS NOT NULL');
-        
-        $columns['target_path'] = new Zend_Db_Expr($this->_quoteInto(
+        $targetPathWithCategory = $this->_quoteInto(
             sprintf(
                 $this->_pathGenerateExpr[self::TARGET_PATH_PRODUCT_CATEGORY],
                 'request_path.product_id',
                 'request_path.category_id'
             ),
             self::TARGET_PATH_PRODUCT_CATEGORY
+        );
+        
+        $targetPathExpr = new Zend_Db_Expr(sprintf(
+            'IF(request_path.category_id IS NULL, %s, %s)',
+            $targetPathWithoutCategory, 
+            $targetPathWithCategory
         ));
+        
+        $select = $this->_getIndexAdapter()->select();
+        $select
+            ->from(
+                array('request_path' => $this->getTable(self::PRODUCT_REQUEST_PATH)), 
+                array()
+            )
+            ->where('request_path.updated = ?', 1);
+
+        $columns = array(
+            'store_id'    => 'request_path.store_id',
+            'id_path'     => 'request_path.id_path',
+            'category_id' => 'request_path.category_id',
+            'product_id' => 'request_path.product_id',
+            'target_path' => $targetPathExpr,
+            'duplicate_key' => 'request_path.request_path',
+            'duplicate_index' => new Zend_Db_Expr(
+                'IF(request_path.request_path REGEXP \'[0-9]$\', 0, NULL)'
+            ),
+            'updated' => new Zend_Db_Expr('1')
+        );
         
         $select->columns($columns);
         
+        Mage::dispatchEvent(
+           'ecomdev_urlrewrite_indexer_import_from_product_request_path_insert',
+           array('select' => $select, 'columns' => $columns, 'resource' => $this)
+        );
+        
         $this->_getIndexAdapter()->query(
-            $select->insertFromSelect(
+            $select->insertIgnoreFromSelect(
                 $this->getTable(self::REWRITE), 
+                $this->_getColumnsFromSelect($select)
+            )
+        );
+        
+        unset($columns['store_id']);
+        unset($columns['id_path']);
+        unset($columns['category_id']);
+        
+        $columns['duplicate_index'] =  new Zend_Db_Expr($this->_quoteInto(
+            'IF(rewrite.duplicate_index IS NOT NULL ' 
+                . ' AND SUBSTRING_INDEX(rewrite.duplicate_key, ?, -1) = SUBSTRING_INDEX(request_path.request_path, ?, -1), '
+                . ' rewrite.duplicate_index, '
+                . ' IF(request_path.request_path REGEXP \'[0-9]$\', 0, NULL))',
+            '/'
+        ));
+        
+        $select->reset(Varien_Db_Select::FROM)
+            ->reset(Varien_Db_Select::COLUMNS)
+            ->join(
+                array('request_path' => $this->getTable(self::PRODUCT_REQUEST_PATH)), 
+                'request_path.store_id = rewrite.store_id' 
+                . ' AND request_path.id_path = rewrite.id_path',
+                array()
+            )
+            ->columns($columns);
+        
+        
+        Mage::dispatchEvent(
+           'ecomdev_urlrewrite_indexer_import_from_product_request_path_update',
+           array('select' => $select, 'columns' => $columns, 'resource' => $this)
+        );
+        
+        $this->_getIndexAdapter()->query(
+            $select->crossUpdateFromSelect(
+                array('rewrite' => $this->getTable(self::REWRITE)), 
                 $this->_getColumnsFromSelect($select)
             )
         );
