@@ -1903,7 +1903,6 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     {
         $this->_resolveDuplicates();
 
-        $this->beginTransaction();
         $categoryRequestPathExpr = $this->_getRequestPathExpr(self::ENTITY_CATEGORY);
         $productRequestPathExpr = $this->_getRequestPathExpr(self::ENTITY_PRODUCT);
         
@@ -1984,7 +1983,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
 
         $this->_finalizeRowsUpdate(self::REWRITE);
         
-        $this->commit();
+        
         return $this;
     }
     
