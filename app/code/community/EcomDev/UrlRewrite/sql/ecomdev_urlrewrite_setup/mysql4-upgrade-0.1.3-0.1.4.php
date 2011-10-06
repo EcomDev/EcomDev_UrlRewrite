@@ -19,6 +19,15 @@
 /* @var $this Mage_Core_Model_Resource_Setup */
 $this->startSetup();
 
+$this->getConnection()->dropKey(
+    $this->getTable('ecomdev_urlrewrite/duplicate'),
+    'IDX_DUPLICATE'
+);
+
+$this->getConnection()->dropColumn(
+    $this->getTable('ecomdev_urlrewrite/duplicate'),
+    'is_duplicate'
+);
 
 $this->getConnection()->dropKey(
     $this->getTable('ecomdev_urlrewrite/rewrite'),
@@ -35,6 +44,12 @@ $this->getConnection()->addKey(
     $this->getTable('ecomdev_urlrewrite/rewrite'),
     'IDX_UPDATED_DUPLICATE',
     array('updated', 'store_id', 'duplicate_key')
+);
+
+$this->getConnection()->addKey(
+    $this->getTable('ecomdev_urlrewrite/duplicate_increment'),
+    'IDX_STORE_DUPLICATE_KEY',
+    array('duplicate_key', 'store_id')
 );
 
 $table = $this->getConnection()->newTable(

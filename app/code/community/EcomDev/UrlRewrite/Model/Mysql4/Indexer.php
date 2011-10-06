@@ -1810,7 +1810,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                  array('store_id', 'duplicate_key', 'min_duplicate_id' => new Zend_Db_Expr('MIN(min_duplicate.duplicate_id)'))
             );
 
-       $select->group(array('min_duplicate.store_id', 'min_duplicate.duplicate_key'));
+       $select->group(array('min_duplicate.duplicate_key', 'min_duplicate.store_id'));
        
        // Changed because of issues with duplicate index calculations
        $this->_getIndexAdapter()->query(
@@ -1833,8 +1833,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $select->reset()
             ->join(
                 array('aggregate' => $this->getTable(self::DUPLICATE_AGGREGATE)),
-                'aggregate.store_id = duplicate_increment.store_id ' 
-                . 'AND aggregate.duplicate_key = duplicate_increment.duplicate_key',
+                'aggregate.duplicate_key = duplicate_increment.duplicate_key ' 
+                . 'AND aggregate.store_id = duplicate_increment.store_id',
                 $columns
             );
          
