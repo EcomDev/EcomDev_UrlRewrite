@@ -866,6 +866,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             );
         }
         
+        $this->commit();
+        
         // Clear not existent rows
         $select->reset()
             ->from(array('url_key' => $this->getTable(self::CATEGORY_URL_KEY)), array())
@@ -884,7 +886,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this->_getIndexAdapter()->query(
             $select->deleteFromSelect('url_key')
         );
-        $this->commit();
+        
         
         return $this;
     }
@@ -1510,7 +1512,9 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         );
         
         $select->crossUpdateFromSelectImproved();
+        $this->commit();
         
+        $this->beginTransaction();
         unset($columns['request_path.updated']);
         
         $columns['duplicate_index'] = new Zend_Db_Expr(
@@ -1621,7 +1625,9 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         
 
         $select->crossUpdateFromSelectImproved();
+        $this->commit();
         
+        $this->beginTransaction();
         unset($columns['request_path.updated']);
         
         $columns['duplicate_index'] = new Zend_Db_Expr(
