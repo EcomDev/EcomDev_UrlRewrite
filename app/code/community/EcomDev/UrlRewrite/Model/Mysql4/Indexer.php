@@ -1464,6 +1464,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
      */
     protected function _importFromCategoryRequestPath()
     {
+        $this->beginTransaction();
         $select = $this->_select();
         $select
             ->from(
@@ -1541,6 +1542,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         );
         
         $this->_finalizeRowsUpdate(self::CATEGORY_REQUEST_PATH);
+        $this->commit();
         return $this;
     }
     
@@ -1551,6 +1553,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
      */
     protected function _importFromProductRequestPath()
     {
+        $this->beginTransaction();
         // Target path generation for product url without category
         $targetPathWithoutCategory = $this->_quoteInto(
             sprintf(
@@ -1652,6 +1655,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         );
         
         $this->_finalizeRowsUpdate(self::PRODUCT_REQUEST_PATH);
+        $this->commit();
         return $this;
     }
     
@@ -1669,6 +1673,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_KEY));
         $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_UPDATED));
         
+        $this->beginTransaction();
         $select = $this->_select();
         
         // Selecting all updated records with duplicate key
@@ -1713,6 +1718,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         );
         
         $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_UPDATED));
+        $this->commit();
+        return $this;
     }
     
     /**
@@ -1723,8 +1730,10 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
     protected function _resolveDuplicates()
     {
         $this->_updateDuplicatedKeysInformation();
-        $select = $this->_select();
+
+        $this->beginTransaction();
         
+        $select = $this->_select();
         // Preparing data for duplicates table
         $select
             ->from(
@@ -1841,7 +1850,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this->_getIndexAdapter()->query(
             $select->crossUpdateFromSelect(array('duplicate' => $this->getTable(self::DUPLICATE)))
         );
-        
+        $this->commit();
         $this->_updateRewriteDuplicates();
         return $this;
     }
