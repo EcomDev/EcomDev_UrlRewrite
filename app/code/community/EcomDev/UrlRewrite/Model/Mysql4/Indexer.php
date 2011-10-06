@@ -996,7 +996,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             $select->getColumnAliases()
         ));
         
-        $this->commit();
+            $this->commit();
         
         if ($result->rowCount()) {
             $this->_getIndexAdapter()->update(
@@ -1810,7 +1810,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $select->reset()
             ->from(
                 array('rewrite' => $this->getTable(self::REWRITE)), 
-                array('duplicate_key', 'store_id', 'max_index' => new Zend_Db_Expr('IFNULL(MAX(rewrite.duplicate_index), 0)'))
+                array('duplicate_key', 'store_id', 'max_index' => new Zend_Db_Expr('MAX(rewrite.duplicate_index)'))
             )->group(array('rewrite.duplicate_key', 'rewrite.store_id'));
 
         $this->_getIndexAdapter()->query(
@@ -1841,8 +1841,13 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this->beginTransaction();
 
         $columns = array(
-            'duplicate_index' => new Zend_Db_Expr( 
-                'aggregate.max_index + 1 + duplicate_increment.duplicate_id - aggregate.min_duplicate_id'
+            'duplicate_index' => new Zend_Db_Expr(
+                // If it is fisrt time duplicate it starts from second element with such formula 1+id diff
+                // If not, then it uses max+1+id diff
+                'IF(aggregate.max_index IS NULL, ' 
+                    . 'IF(duplicate_increment.duplicate_id = aggregate.min_duplicate_id, NULL, 0), ' 
+                    . 'aggregate.max_index + 1' 
+                . ') + duplicate_increment.duplicate_id - aggregate.min_duplicate_id'
             )
         );
         
@@ -1924,7 +1929,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 // Only update changed rows in core url rewrite
                 'updated' => new Zend_Db_Expr(
                     $originalRequestPathExpr . ' IS NULL ' 
-                    . 'OR  ' . $originalRequestPathExpr .  ' = ' 
+                    . 'OR  ' . $originalRequestPathExpr .  ' != ' 
                     . $requestPathExpr
                 )
             ),
@@ -1966,25 +1971,21 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         );
         
         $select
-            ->reset()
+            ->from(array('rewrite' => $this->getTable(self::REWRITE)), array())
             ->join(
                 array('core_rewrite' => $this->getTable('core/url_rewrite')),
                 'core_rewrite.store_id = rewrite.store_id AND core_rewrite.id_path = rewrite.id_path',
                 array(
-                    'rewrite_id' => 'url_rewrite_id'
+                    'rewrite_id' => 'url_rewrite_id',
+                    'updated' => 0
                 )
             )
             ->where('rewrite.rewrite_id IS NULL');
         
-        $this->_getIndexAdapter()->query(
-            $select->crossUpdateFromSelect(
-                array('rewrite' => $this->getTable(self::REWRITE))
-            )
-        );
-
+        
+        $select->crossUpdateFromSelectImproved();
+        
         $this->_finalizeRowsUpdate(self::REWRITE);
-        
-        
         return $this;
     }
     

@@ -268,6 +268,10 @@ $table
         array('request_path')
     )
     ->addIndex(
+        'IDX_ORIG_REQ_PATH_PAIR',
+        array('request_path', 'original_request_path')
+    )
+    ->addIndex(
         'IDX_DUPLICATE_STORE',
         array('duplicate_key', 'store_id',  'duplicate_index')
     )
@@ -346,7 +350,7 @@ $table = $this->getConnection()->newTable($this->getTable('ecomdev_urlrewrite/du
     )
     ->addColumn(
         'duplicate_index', Varien_Db_Ddl_Table::TYPE_INTEGER, null,
-        array('nullable' => false, 'unsigned' => true)
+        array('nullable' => true, 'unsigned' => true)
     )
     ->addIndex(
         'IDX_STORE_DUPLICATE_KEY',
@@ -380,7 +384,7 @@ $table
     )
     ->addColumn(
         'duplicate_index', Varien_Db_Ddl_Table::TYPE_INTEGER, null,
-        array('nullable' => false, 'unsigned' => true)
+        array('nullable' => true, 'unsigned' => true)
     )
     ->addIndex('IDX_STORE_ID_PATH', array('store_id', 'id_path'))
     ->addIndex('IDX_STORE_DUPLICATE_KEY', array('duplicate_key', 'store_id'))
@@ -411,8 +415,8 @@ $table
         array('unsigned' => true, 'nullable' => false, 'primary' => true)
     )
     ->addColumn(
-        'max_index', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
-        array('nullable' => false)
+        'max_index', Varien_Db_Ddl_Table::TYPE_INTEGER, null,
+        array('nullable' => true, 'unsigned' => true)
     )
     ->addColumn(
         'min_duplicate_id', Varien_Db_Ddl_Table::TYPE_INTEGER, null,
