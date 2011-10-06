@@ -46,6 +46,7 @@ $this->getConnection()->addKey(
     array('updated', 'store_id', 'duplicate_key')
 );
 
+// Change order of fields in index 
 $this->getConnection()->addKey(
     $this->getTable('ecomdev_urlrewrite/duplicate_increment'),
     'IDX_STORE_DUPLICATE_KEY',
