@@ -272,6 +272,10 @@ $table
         array('duplicate_key', 'store_id',  'duplicate_index')
     )
     ->addIndex(
+        'IDX_DUPLICATE_KEY_STORE',
+        array('duplicate_key', 'store_id')
+    )
+    ->addIndex(
         'IDX_UPDATED_DUPLICATE',
         array('updated', 'store_id', 'duplicate_key')
     )
