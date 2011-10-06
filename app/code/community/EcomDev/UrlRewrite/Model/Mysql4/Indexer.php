@@ -1691,7 +1691,9 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 false
             )
         );
+        $this->commit();
         
+        $this->beginTransaction();
         // Saving only real duplicates into dulplicate_key table
         $select
             ->reset()
@@ -1716,8 +1718,9 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             )
         );
         
-        $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_UPDATED));
         $this->commit();
+        $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_UPDATED));
+        
         return $this;
     }
     
@@ -1779,6 +1782,10 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 $select->getColumnAliases()
             )
         );
+        
+        $this->commit();
+        
+        $this->beginTransaction();
          
         $select->reset()
             ->from($this->getTable(self::DUPLICATE), array('store_id', 'id_path', 'duplicate_key'))
@@ -1790,7 +1797,10 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 $select->getColumnAliases()
             )
         );
-            
+
+        $this->commit();
+        
+        $this->beginTransaction();
         $select->reset()
             ->from(
                 array('rewrite' => $this->getTable(self::REWRITE)), 
