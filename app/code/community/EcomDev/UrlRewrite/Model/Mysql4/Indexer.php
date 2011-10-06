@@ -1349,6 +1349,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
      */
     protected function _importDuplicatedKeys()
     {
+        $this->beginTransaction();
         $select = $this->_select();
         $select
             ->from(
@@ -1421,6 +1422,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             $select->deleteFromSelect('duplicate')
         );
         
+        $this->commit();
+        
         $this->_updateRewriteDuplicates();
         
         return $this;
@@ -1451,9 +1454,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             $select->crossUpdateFromSelect(array('rewrite' => $this->getTable(self::REWRITE)))
         );
         
-        $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE));
-        $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_INCREMENT));
-        $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_AGGREGATE));
+        $this->_clearDuplicates();
+        
         return $this;
     }
     
@@ -1670,9 +1672,6 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
      */
     protected function _updateDuplicatedKeysInformation()
     {
-        $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_KEY));
-        $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_UPDATED));
-        
         $this->beginTransaction();
         $select = $this->_select();
         
@@ -1820,6 +1819,10 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 $select->getColumnAliases()
             )
         );
+        
+        $this->commit();
+        
+        $this->beginTransaction();
 
         $columns = array(
             'duplicate_index' => new Zend_Db_Expr( 
@@ -1834,7 +1837,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 . 'AND aggregate.duplicate_key = duplicate_increment.duplicate_key',
                 $columns
             );
-
+         
         $this->_getIndexAdapter()->query(
             $select->crossUpdateFromSelect(array('duplicate_increment' => $this->getTable(self::DUPLICATE_INCREMENT)))
         );
@@ -1850,9 +1853,20 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this->_getIndexAdapter()->query(
             $select->crossUpdateFromSelect(array('duplicate' => $this->getTable(self::DUPLICATE)))
         );
+        
         $this->commit();
         $this->_updateRewriteDuplicates();
+        
         return $this;
+    }
+    
+    protected function _clearDuplicates()
+    {
+        $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE));
+        $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_KEY));
+        $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_UPDATED));
+        $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_INCREMENT));
+        $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_AGGREGATE));
     }
     
     /**
