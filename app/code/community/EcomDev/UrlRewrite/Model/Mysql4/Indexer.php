@@ -1845,18 +1845,19 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             )
         );
         
-        $select->reset()
-            ->join(
+        $select->reset();
+        $select
+            ->joinStraight(
                 array('aggregate' => $this->getTable(self::DUPLICATE_AGGREGATE)),
                 'aggregate.duplicate_key = duplicate_increment.duplicate_key ' 
                 . 'AND aggregate.store_id = duplicate_increment.store_id',
                 $columns
             );
-         
+
         $this->_getIndexAdapter()->query(
             $select->crossUpdateFromSelect(array('duplicate_increment' => $this->getTable(self::DUPLICATE_INCREMENT)))
         );
-        
+
         $select->reset()
             ->join(
                 array('duplicate_increment' => $this->getTable(self::DUPLICATE_INCREMENT)),
