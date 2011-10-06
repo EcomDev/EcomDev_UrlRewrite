@@ -853,6 +853,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             $select->getColumnAliases()
         ));
         
+        $this->commit();
+        
         if ($result->rowCount()) {
             $this->_getIndexAdapter()->update(
                 $this->getTable(self::CATEGORY_URL_KEY),
@@ -865,8 +867,6 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 )
             );
         }
-        
-        $this->commit();
         
         // Clear not existent rows
         $select->reset()
@@ -996,6 +996,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             $select->getColumnAliases()
         ));
         
+        $this->commit();
+        
         if ($result->rowCount()) {
             $this->_getIndexAdapter()->update(
                 $this->getTable(self::PRODUCT_URL_KEY),
@@ -1027,7 +1029,6 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this->_getIndexAdapter()->query(
             $select->deleteFromSelect('url_key')
         );
-        $this->commit();
         
         return $this;
     }
