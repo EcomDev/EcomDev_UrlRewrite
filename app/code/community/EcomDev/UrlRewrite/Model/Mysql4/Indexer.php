@@ -1760,8 +1760,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $columns = array(
              'store_id' => 'rewrite.store_id',
              'id_path'  => 'rewrite.id_path',
-             'duplicate_key' => 'rewrite.duplicate_key',
-             'is_duplicate' => new Zend_Db_Expr('1')
+             'duplicate_key' => 'rewrite.duplicate_key'
         );
 
         $select->columns($columns);
