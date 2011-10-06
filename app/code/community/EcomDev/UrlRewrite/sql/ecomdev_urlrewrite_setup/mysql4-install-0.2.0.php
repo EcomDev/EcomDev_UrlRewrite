@@ -19,6 +19,99 @@
 /* @var $this Mage_Core_Model_Resource_Setup */
 $this->startSetup();
 
+// This table provides data that can be used for LIKE path expressions 
+// with categories
+$table = $this->getConnection()->newTable(
+    $this->getTable('ecomdev_urlrewrite/root_category')
+);
+
+$table
+    ->addColumn(
+        'store_id', Varien_Db_Ddl_Table::TYPE_SMALLINT, null,
+        array('unsigned' => true, 'nullable' => false, 'primary' => true)
+    )
+    ->addColumn(
+        'path', Varien_Db_Ddl_Table::TYPE_CHAR, 16,
+        array('unsigned' => true, 'nullable' => false)
+    )
+    ->addIndex('IDX_CATEGORY_PATH', array('path'))
+    ->setOption('collate', null);
+
+$this->getConnection()->createTable($table);
+
+// These two tables will not have any foreign keys
+// They will not be cleared automatically if product/category 
+// or store will be deleted
+// They created to minimize time on update of the url key via clean_url_key 
+// stored function
+$table = $this->getConnection()->newTable(
+    $this->getTable('ecomdev_urlrewrite/category_url_key')
+);
+
+$table
+    ->addColumn(
+        'store_id', Varien_Db_Ddl_Table::TYPE_SMALLINT, null,
+        array('unsigned' => true, 'nullable' => false, 'primary' => true)
+    )
+    ->addColumn(
+        'category_id', Varien_Db_Ddl_Table::TYPE_INTEGER, null,
+        array('unsigned' => true, 'nullable' => false, 'primary' => true)
+    )
+    ->addColumn(
+        'level', Varien_Db_Ddl_Table::TYPE_SMALLINT, null,
+        array('unsigned' => true, 'nullable' => false)
+    )
+    ->addColumn(
+        'updated', Varien_Db_Ddl_Table::TYPE_TINYINT, 1,
+        array('unsigned' => true, 'nullable' => false, 'default' => 1)
+    )
+    ->addColumn(
+        'url_key_source', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
+        array('nullable' => false)
+    )
+    ->addColumn(
+        'url_key', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
+        array('nullable' => false)
+    )
+    ->addIndex(
+       'IDX_UPDATED', array('updated')
+    )
+    ->setOption('collate', null);
+    
+$this->getConnection()->createTable($table);
+    
+$table = $this->getConnection()->newTable(
+    $this->getTable('ecomdev_urlrewrite/product_url_key')
+);
+
+$table
+    ->addColumn(
+        'store_id', Varien_Db_Ddl_Table::TYPE_SMALLINT, null,
+        array('unsigned' => true, 'nullable' => false, 'primary' => true)
+    )
+    ->addColumn(
+        'product_id', Varien_Db_Ddl_Table::TYPE_INTEGER, null,
+        array('unsigned' => true, 'nullable' => false, 'primary' => true)
+    )
+    ->addColumn(
+        'updated', Varien_Db_Ddl_Table::TYPE_TINYINT, 1,
+        array('unsigned' => true, 'nullable' => false, 'default' => 1)
+    )
+    ->addColumn(
+        'url_key_source', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
+        array('nullable' => false)
+    )
+    ->addColumn(
+        'url_key', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
+        array('nullable' => false)
+    )
+    ->addIndex(
+       'IDX_UPDATED', array('updated')
+    )
+    ->setOption('collate', null);
+
+$this->getConnection()->createTable($table);
+
 $table = $this->getConnection()->newTable(
     $this->getTable('ecomdev_urlrewrite/category_request_path')
 );
@@ -42,10 +135,6 @@ $table
         array('unsigned' => true, 'nullable' => false)
     )
     ->addColumn(
-        'url_key', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
-        array('nullable' => false)
-    )
-    ->addColumn(
         'request_path', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
         array('nullable' => false)
     )
@@ -61,20 +150,6 @@ $table
     )
     ->addIndex(
         'IDX_UPDATED', array('updated')
-    )
-    ->addForeignKey(
-        'FK_ECOMDEV_URLREWRITE_CAT_URL_KEY_STORE', 
-        'store_id', 
-        $this->getTable('core/store'), 
-        'store_id',
-        Varien_Db_Ddl_Table::ACTION_CASCADE
-    )
-    ->addForeignKey(
-        'FK_ECOMDEV_URLREWRITE_CAT_URL_KEY_CATEGORY', 
-        'category_id', 
-        $this->getTable('catalog/category'), 
-        'entity_id',
-        Varien_Db_Ddl_Table::ACTION_CASCADE
     )
     ->setOption('collate', null);
 
@@ -103,10 +178,6 @@ $table
         array('unsigned' => true, 'nullable' => true)
     )
     ->addColumn(
-        'url_key', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
-        array('nullable' => false)
-    )
-    ->addColumn(
         'request_path', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
         array('nullable' => false)
     )
@@ -125,27 +196,6 @@ $table
     ->addIndex(
         'IDX_UPDATED', 
         array('updated')
-    )
-    ->addForeignKey(
-        'FK_ECOMDEV_URLREWRITE_PROD_URL_KEY_STORE', 
-        'store_id', 
-        $this->getTable('core/store'), 
-        'store_id',
-        Varien_Db_Ddl_Table::ACTION_CASCADE
-    )
-    ->addForeignKey(
-        'FK_ECOMDEV_URLREWRITE_PROD_URL_KEY_PRODUCT', 
-        'product_id', 
-        $this->getTable('catalog/product'), 
-        'entity_id',
-        Varien_Db_Ddl_Table::ACTION_CASCADE
-    )
-    ->addForeignKey(
-        'FK_ECOMDEV_URLREWRITE_PROD_URL_KEY_CATEGORY', 
-        'category_id', 
-        $this->getTable('catalog/category'), 
-        'entity_id',
-        Varien_Db_Ddl_Table::ACTION_CASCADE
     )
     ->setOption('collate', null);
 
@@ -218,8 +268,12 @@ $table
         array('request_path')
     )
     ->addIndex(
-        'IDX_REQ_PATH_DUPLICATE',
-        array('duplicate_key', 'duplicate_index')
+        'IDX_DUPLICATE_STORE',
+        array('duplicate_key', 'store_id',  'duplicate_index')
+    )
+    ->addIndex(
+        'IDX_UPDATED_DUPLICATE',
+        array('updated', 'store_id', 'duplicate_key')
     )
     ->addIndex(
         'IDX_UPDATED',
@@ -235,7 +289,44 @@ $table
     ->setOption('collate', null);
     
 $this->getConnection()->createTable($table);
-// Duplicates collection table
+
+// Information about wich duplicate keys were updated
+$table = $this->getConnection()->newTable(
+    $this->getTable('ecomdev_urlrewrite/duplicate_updated')
+);
+
+$table
+    ->addColumn(
+        'duplicate_key', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
+        array('nullable' => false, 'primary' => true)
+    )
+    ->addColumn(
+        'store_id', Varien_Db_Ddl_Table::TYPE_SMALLINT, null,
+        array('unsigned' => true, 'nullable' => false, 'primary' => true)
+    )
+    ->setOption('collate', null);
+
+$this->getConnection()->createTable($table);
+
+// Contains infromation about really duplicated keys
+$table = $this->getConnection()->newTable(
+    $this->getTable('ecomdev_urlrewrite/duplicate_key')
+);
+
+$table
+    ->addColumn(
+        'duplicate_key', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
+        array('nullable' => false, 'primary' => true)
+    )
+    ->addColumn(
+        'store_id', Varien_Db_Ddl_Table::TYPE_SMALLINT, null,
+        array('unsigned' => true, 'nullable' => false, 'primary' => true)
+    )
+    ->setOption('collate', null);
+
+$this->getConnection()->createTable($table);
+
+// Duplicates main table
 $table = $this->getConnection()->newTable($this->getTable('ecomdev_urlrewrite/duplicate'))
     ->addColumn(
         'store_id', Varien_Db_Ddl_Table::TYPE_SMALLINT, null,
@@ -246,8 +337,38 @@ $table = $this->getConnection()->newTable($this->getTable('ecomdev_urlrewrite/du
         array('nullable' => false, 'primary' => true)
     )
     ->addColumn(
-        'duplicated_id_path', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255, 
-        array('nullable' => true)
+        'duplicate_key', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
+        array('nullable' => false)
+    )
+    ->addColumn(
+        'duplicate_index', Varien_Db_Ddl_Table::TYPE_INTEGER, null,
+        array('nullable' => false, 'unsigned' => true)
+    )
+    ->addIndex(
+        'IDX_STORE_DUPLICATE_KEY',
+        array('duplicate_key', 'store_id')
+    )
+    ->setOption('collate', null);
+
+$this->getConnection()->createTable($table);
+
+
+$table = $this->getConnection()->newTable(
+    $this->getTable('ecomdev_urlrewrite/duplicate_increment')
+);
+
+$table
+    ->addColumn(
+        'duplicate_id', Varien_Db_Ddl_Table::TYPE_INTEGER, null,
+        array('unsigned' => true, 'nullable' => false, 'primary' => true, 'identifier' => 1)
+    )
+    ->addColumn(
+        'store_id', Varien_Db_Ddl_Table::TYPE_SMALLINT, null,
+        array('unsigned' => true, 'nullable' => false)
+    )
+    ->addColumn(
+        'id_path', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
+        array('unsigned' => true, 'nullable' => false)
     )
     ->addColumn(
         'duplicate_key', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
@@ -255,23 +376,48 @@ $table = $this->getConnection()->newTable($this->getTable('ecomdev_urlrewrite/du
     )
     ->addColumn(
         'duplicate_index', Varien_Db_Ddl_Table::TYPE_INTEGER, null,
-        array('nullable' => true, 'unsigned' => true)
+        array('nullable' => false, 'unsigned' => true)
+    )
+    ->addIndex('IDX_STORE_ID_PATH', array('store_id', 'id_path'))
+    ->addIndex('IDX_STORE_DUPLICATE_KEY', array('duplicate_key', 'store_id'))
+    ->setOption('collate', null);
+
+$this->getConnection()->createTable($table);
+
+// If lower then 1.6, then there is a bug with auto_increment field
+// So we need to modify our column
+if (!method_exists($this->getConnection(), 'insertFromSelect')) {
+    $this->getConnection()->modifyColumn(
+        $this->getTable('ecomdev_urlrewrite/duplicate_increment'), 
+        'duplicate_id', 'INT(10) UNSIGNED NOT NULL AUTO_INCREMENT'
+    );
+}
+
+$table = $this->getConnection()->newTable(
+    $this->getTable('ecomdev_urlrewrite/duplicate_aggregate')
+);
+
+$table
+    ->addColumn(
+        'duplicate_key', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
+        array('nullable' => false, 'primary' => true)
     )
     ->addColumn(
-        'max_duplicate_index', Varien_Db_Ddl_Table::TYPE_INTEGER, null,
-        array('nullable' => true, 'unsigned' => true)
+        'store_id', Varien_Db_Ddl_Table::TYPE_SMALLINT, null,
+        array('unsigned' => true, 'nullable' => false, 'primary' => true)
     )
-    ->addIndex(
-        'IDX_REQ_PATH_DUPLICATE',
-        array('duplicate_key')
+    ->addColumn(
+        'max_index', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255,
+        array('nullable' => false)
     )
-    ->addIndex(
-        'IDX_DUPLICATED_ID_PATH', 
-        array('duplicated_id_path')
+    ->addColumn(
+        'min_duplicate_id', Varien_Db_Ddl_Table::TYPE_INTEGER, null,
+        array('nullable' => false, 'unsigned' => true)
     )
     ->setOption('collate', null);
 
 $this->getConnection()->createTable($table);
+
 
 $table = $this->getConnection()->newTable(
     $this->getTable('ecomdev_urlrewrite/category_relation')

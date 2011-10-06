@@ -1397,9 +1397,9 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $select->reset()
             ->from(
                 $this->getTable(self::DUPLICATE),
-                array('store_id', 'duplicate_key')
+                array('duplicate_key', 'store_id')
             )
-            ->group(array('store_id', 'duplicate_key'))
+            ->group(array('duplicate_key', 'store_id'))
             ->having('COUNT(*) = ?', 1);
         
         $this->_getIndexAdapter()->query(
@@ -1416,8 +1416,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             )
             ->join(
                 array('not_duplicate' => $this->getTable(self::DUPLICATE_KEY)),
-                'not_duplicate.store_id = duplicate.store_id ' 
-                . 'AND not_duplicate.duplicate_key = duplicate.duplicate_key'
+                'not_duplicate.duplicate_key = duplicate.duplicate_key ' 
+                . 'AND not_duplicate.store_id = duplicate.store_id '
             );
         
         $this->_getIndexAdapter()->query(
@@ -1685,10 +1685,10 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $select
             ->from(
                 $this->getTable(self::REWRITE),
-                array('store_id', 'duplicate_key')
+                array('duplicate_key', 'store_id')
             )
             ->where('updated = ?', 1)
-            ->group(array('store_id', 'duplicate_key'));
+            ->group(array('duplicate_key', 'store_id'));
         
         $this->_getIndexAdapter()->query(
             $select->insertFromSelect(
@@ -1705,15 +1705,15 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             ->reset()
             ->from(
                 array('duplicate_updated' => $this->getTable(self::DUPLICATE_UPDATED)),
-                array('store_id', 'duplicate_key')
+                array('duplicate_key', 'store_id')
             )
             ->join(
                 array('rewrite' => $this->getTable(self::REWRITE)),
-                'rewrite.store_id = duplicate_updated.store_id ' 
-                . 'AND rewrite.duplicate_key =  duplicate_updated.duplicate_key',
+                'rewrite.duplicate_key =  duplicate_updated.duplicate_key '
+                . 'AND rewrite.store_id = duplicate_updated.store_id ',
                 array()
             )
-            ->group(array('duplicate_updated.store_id', 'duplicate_updated.duplicate_key'))
+            ->group(array('duplicate_updated.duplicate_key', 'duplicate_updated.store_id'))
             ->having('COUNT(*) > ?', 1);
         
         $this->_getIndexAdapter()->query(
@@ -1750,8 +1750,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
             )
             ->join(
                 array('duplicate' => $this->getTable(self::DUPLICATE_KEY)),
-                'duplicate.store_id = rewrite.store_id ' 
-                . ' AND duplicate.duplicate_key = rewrite.duplicate_key',
+                'duplicate.duplicate_key = rewrite.duplicate_key ' 
+                . ' AND duplicate.store_id = rewrite.store_id',
                 array()
             )
             ->where('rewrite.updated = ?', 1)
@@ -1795,7 +1795,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
          
         $select->reset()
             ->from($this->getTable(self::DUPLICATE), array('store_id', 'id_path', 'duplicate_key'))
-            ->order(array('store_id ASC', 'duplicate_key ASC'));
+            ->order(array('duplicate_key ASC', 'store_id ASC'));
         
         $this->_getIndexAdapter()->query(
             $select->insertIgnoreFromSelect(
@@ -1810,8 +1810,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $select->reset()
             ->from(
                 array('rewrite' => $this->getTable(self::REWRITE)), 
-                array('store_id', 'duplicate_key', 'max_index' => new Zend_Db_Expr('IFNULL(MAX(rewrite.duplicate_index), 0)'))
-            )->group(array('rewrite.store_id', 'rewrite.duplicate_key'));
+                array('duplicate_key', 'store_id', 'max_index' => new Zend_Db_Expr('IFNULL(MAX(rewrite.duplicate_index), 0)'))
+            )->group(array('rewrite.duplicate_key', 'rewrite.store_id'));
 
         $this->_getIndexAdapter()->query(
             $select->insertIgnoreFromSelect(
@@ -1823,13 +1823,13 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $select->reset()
             ->from(
                  array('min_duplicate' => $this->getTable(self::DUPLICATE_INCREMENT)), 
-                 array('store_id', 'duplicate_key', 'min_duplicate_id' => new Zend_Db_Expr('MIN(min_duplicate.duplicate_id)'))
+                 array('duplicate_key','store_id', 'min_duplicate_id' => new Zend_Db_Expr('MIN(min_duplicate.duplicate_id)'))
             );
 
-       $select->group(array('min_duplicate.duplicate_key', 'min_duplicate.store_id'));
+        $select->group(array('min_duplicate.duplicate_key', 'min_duplicate.store_id'));
        
-       // Changed because of issues with duplicate index calculations
-       $this->_getIndexAdapter()->query(
+        // Changed because of issues with duplicate index calculations
+        $this->_getIndexAdapter()->query(
             $select->insertFromSelect(
                 $this->getTable(self::DUPLICATE_AGGREGATE), 
                 $select->getColumnAliases()
@@ -1876,6 +1876,11 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         return $this;
     }
     
+    /**
+     * Clears data in duplicate tables
+     * 
+     * @return EcomDev_UrlRewrite_Model_Mysql4_Indexer
+     */
     protected function _clearDuplicates()
     {
         $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE));
@@ -1883,6 +1888,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_UPDATED));
         $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_INCREMENT));
         $this->_getIndexAdapter()->truncate($this->getTable(self::DUPLICATE_AGGREGATE));
+        
+        return $this;
     }
     
     /**
