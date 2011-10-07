@@ -76,6 +76,12 @@ $table
     ->addIndex(
        'IDX_UPDATED', array('updated')
     )
+    ->addIndex(
+        'IDX_LEVEL', array('level')
+    )
+    ->addIndex(
+       'IDX_CATEGORY_STORE', array('category_id', 'store_id')
+    )
     ->setOption('collate', null);
     
 $this->getConnection()->createTable($table);
@@ -107,6 +113,9 @@ $table
     )
     ->addIndex(
        'IDX_UPDATED', array('updated')
+    )
+    ->addIndex(
+       'IDX_PRODUCT_STORE', array('product_id', 'store_id')
     )
     ->setOption('collate', null);
 
@@ -444,7 +453,31 @@ $table
     ->addColumn(
         'type', Varien_Db_Ddl_Table::TYPE_VARCHAR, 32,
         array('nullable' => false, 'primary' => true)
+    )
+    ->addIndex('IDX_RELATION_BY_TYPE', array('category_id', 'type', 'related_id'));
+
+$this->getConnection()->createTable($table);
+    
+$table = $this->getConnection()->newTable(
+    $this->getTable('ecomdev_urlrewrite/product_relation')
+);
+
+// Category product relation index table, 
+// filled in before generation of request path
+$table
+    ->addColumn(
+        'store_id', Varien_Db_Ddl_Table::TYPE_SMALLINT, null,
+        array('unsigned' => true, 'nullable' => false, 'primary' => true)
+    )
+    ->addColumn(
+        'category_id', Varien_Db_Ddl_Table::TYPE_INTEGER, null,
+        array('unsigned' => true, 'nullable' => false, 'primary' => true)
+    )
+    ->addColumn(
+        'product_id', Varien_Db_Ddl_Table::TYPE_INTEGER, null,
+        array('unsigned' => true, 'nullable' => false, 'primary' => true)
     );
+    
 
 $this->getConnection()->createTable($table);
 

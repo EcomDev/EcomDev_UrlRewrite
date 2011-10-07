@@ -41,6 +41,9 @@
                     <category_request_path>
                         <table>ecomdev_urlrewrite_category_request_path</table>
                     </category_request_path>
+                    <product_relation>
+                        <table>ecomdev_urlrewrite_product_relation</table>
+                    </product_relation>
                     <product_url_key>
                         <table>ecomdev_urlrewrite_product_url_key</table>
                     </product_url_key>
