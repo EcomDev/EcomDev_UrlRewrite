@@ -236,7 +236,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Select extends Varien_Db_Select
             }
 
             
-            $indexInstruction = $this->_parts[self::INDEX][$correlationName]['type'];
+            $indexInstruction = $this->_parts[self::INDEX][$correlationName];
             
             $replace['from'][] = $this->_getQuotedTable($table['tableName'], $correlationName);
             $replace['to'][] = $this->_getQuotedTable($table['tableName'], $correlationName)
