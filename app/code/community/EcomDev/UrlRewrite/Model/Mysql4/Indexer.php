@@ -2001,7 +2001,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 'updated' => new Zend_Db_Expr(
                     $originalRequestPathExpr . ' IS NULL ' 
                     . 'OR  ' . $originalRequestPathExpr .  ' != ' 
-                    . $requestPathExpr
+                    . $requestPathExpr . ' OR rewrite_id IS NULL'
                 )
             ),
             array(
