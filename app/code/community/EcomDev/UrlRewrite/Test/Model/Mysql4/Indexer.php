@@ -166,6 +166,7 @@ class EcomDev_UrlRewrite_Test_Model_Mysql4_Indexer extends EcomDev_PHPUnit_Test_
      * @loadFixture rootCategoryIndex
      * @loadFixture categoryRelationIndex
      * @loadFixture categoryRequestPathIndex
+     * @loadFixture categoryUrlKeyIndex
      * @dataProvider dataProvider
      * @covers EcomDev_UrlRewrite_Model_Mysql4_Indexer::_generateProductUrlPathIndex
      * @covers EcomDev_UrlRewrite_Model_Mysql4_Indexer::_getProductRequestPathSelect
@@ -193,6 +194,7 @@ class EcomDev_UrlRewrite_Test_Model_Mysql4_Indexer extends EcomDev_PHPUnit_Test_
             $this->expected($dataSet)->getResult(), 
             $result
         );
+        
         return $this;
     }
 

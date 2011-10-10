@@ -519,7 +519,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 )
                 ->join(
                     array('category' => $this->getTable(self::CATEGORY_REQUEST_PATH)),
-                    'category.store_id = category.category_id AND category.category_id = relation.category_id', 
+                    'category.store_id = relation.store_id AND category.category_id = relation.category_id', 
                     array()
                 )
                 ->join(
