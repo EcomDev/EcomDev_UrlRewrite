@@ -66,6 +66,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Select extends Varien_Db_Select
             $adapter = current($adapter);
         }
         
+        self::$_joinTypes[] = self::STRAIGHT_JOIN;
+        
         parent::__construct($adapter);
     }
     
@@ -255,5 +257,22 @@ class EcomDev_UrlRewrite_Model_Mysql4_Select extends Varien_Db_Select
         }
         
         return $sql;
+    }
+    
+    
+    // Backward compatibility issue with method in Magento core!!
+    /**
+     * Straight join BC method, 
+     * since Varien just removed it in 1.6 instead of marking as depracated
+     *
+     * @param  array|string|Zend_Db_Expr $name The table name.
+     * @param  string $cond Join on this condition.
+     * @param  array|string $cols The columns to select from the joined table.
+     * @param  string $schema The database name to specify, if any.
+     * @return Zend_Db_Select This Zend_Db_Select object.
+     */
+    public function joinStraight($name, $cond, $cols = self::SQL_WILDCARD, $schema = null)
+    {
+        return $this->_join(self::STRAIGHT_JOIN_ON, $name, $cond, $cols, $schema);
     }
 }
