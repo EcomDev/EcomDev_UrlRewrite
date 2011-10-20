@@ -231,7 +231,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                     $select->from($this->getTable(self::TRANSLITERATE), 'COUNT(character_to)')
                 );
                 
-                if (!$numberOfRows) {
+                if ($numberOfRows) {
                     return $this;
                 }
             }
@@ -1999,9 +1999,8 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 ),
                 // Only update changed rows in core url rewrite
                 'updated' => new Zend_Db_Expr(
-                    $originalRequestPathExpr . ' IS NULL ' 
-                    . 'OR  ' . $originalRequestPathExpr .  ' != ' 
-                    . $requestPathExpr . ' OR rewrite_id IS NULL'
+                    '(original_request_path IS NULL ' 
+                    . 'OR  original_request_path != request_path)'
                 )
             ),
             array(

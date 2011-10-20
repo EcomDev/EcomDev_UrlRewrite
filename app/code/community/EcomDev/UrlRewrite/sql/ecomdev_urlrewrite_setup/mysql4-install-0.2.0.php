@@ -496,13 +496,13 @@ $table = $this->getConnection()->newTable($this->getTable('ecomdev_urlrewrite/tr
 
 $this->getConnection()->createTable($table);
 
-// Url path formatter function Works only with mysql starting f 5.0
+// Url path formatter function Works only with mysql starting of 5.0
 $this->getConnection()->query('DROP FUNCTION IF EXISTS ECOMDEV_CLEAN_URL_KEY');
 
 $this->getConnection()->query("
 CREATE FUNCTION ECOMDEV_CLEAN_URL_KEY(
         _url_key VARCHAR(255) CHARSET utf8
-    ) RETURNS varchar(255) CHARSET utf8
+    )  RETURNS varchar(255) CHARSET utf8 READS SQL DATA
 BEGIN 
     DECLARE _char_position SMALLINT(5);
     DECLARE _char CHAR(8) CHARSET utf8;
