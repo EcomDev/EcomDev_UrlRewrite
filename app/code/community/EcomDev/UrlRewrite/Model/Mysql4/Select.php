@@ -66,7 +66,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Select extends Varien_Db_Select
             $adapter = current($adapter);
         }
         
-        self::$_joinTypes[] = self::STRAIGHT_JOIN;
+        self::$_joinTypes[] = self::SQL_STRAIGHT_JOIN;
         
         parent::__construct($adapter);
     }
@@ -273,6 +273,6 @@ class EcomDev_UrlRewrite_Model_Mysql4_Select extends Varien_Db_Select
      */
     public function joinStraight($name, $cond, $cols = self::SQL_WILDCARD, $schema = null)
     {
-        return $this->_join(self::STRAIGHT_JOIN_ON, $name, $cond, $cols, $schema);
+        return $this->_join(self::SQL_STRAIGHT_JOIN, $name, $cond, $cols, $schema);
     }
 }
