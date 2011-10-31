@@ -377,7 +377,7 @@ $table = $this->getConnection()->newTable(
 $table
     ->addColumn(
         'duplicate_id', Varien_Db_Ddl_Table::TYPE_INTEGER, null,
-        array('unsigned' => true, 'nullable' => false, 'primary' => true, 'identifier' => 1)
+        array('unsigned' => true, 'nullable' => false, 'primary' => true, 'identity' => true)
     )
     ->addColumn(
         'store_id', Varien_Db_Ddl_Table::TYPE_SMALLINT, null,
