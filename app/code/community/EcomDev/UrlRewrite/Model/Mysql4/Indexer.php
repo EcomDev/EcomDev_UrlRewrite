@@ -2227,4 +2227,22 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         $eventData = $event->getNewData();
         $this->updateCategoryRewrites($eventData['rewrite_category_ids']);
     }
+    
+    /**
+     * Overriden to not produce an error on enterprise 1.11.1.0, there is no need in disabling keys for indexer...
+     *
+     */
+    public function disableTableKeys()
+    {
+        return $this;
+    }
+    
+    /**
+     * Overriden to not produce an error on enterprise 1.11.1.0, there is no need in disabling keys for indexer...
+     *
+     */
+    public function enableTableKeys()
+    {
+        return $this;
+    }
 }
