@@ -23,4 +23,10 @@ NOTICE
 ------
 Currently this extension is in beta version, don't install it directly on live website without checking its stability on semilive/prelive/dev version
 
+Issue with Stored Routines
+-----------------------------
+If you install extension on one db but then transfer db to anohter instance, it is possible that you forget to include stored porcedures with your dump.
+The fix can be done by performing the following action:
+* Drop all `ecomdev_urlrewrite_*` tables
+* Delete record from `core_resource` with code `ecomdev_urlrewrite_setup`
 
