@@ -127,7 +127,6 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
      * If $flag parameter is passed, then history save is forced 
      * 
      * @param boolean $flag
-     * @param mixed $storeId
      * @return boolean
      */
     public function isSaveHistory($flag = null)
@@ -1148,9 +1147,15 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         }
         
         $this->_getIndexAdapter()->beginTransaction();
+
+        $rewriteGenerationTypes = array(false, true);
+
+        if (!Mage::getStoreConfig(Mage_Catalog_Helper_Product::XML_PATH_PRODUCT_URL_USE_CATEGORY)) {
+            array_pop($rewriteGenerationTypes);
+        }
         
         // Initialize rewrite request path data
-        foreach (array(false, true) as $categoryRewriteFlag) {
+        foreach ($rewriteGenerationTypes as $categoryRewriteFlag) {
             $select = $this->_getProductRequestPathSelect($categoryRewriteFlag);
             
             if (isset($conditionSelect)) {
