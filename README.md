@@ -1,3 +1,5 @@
+<a href="http://www.ecomdev.org/integrations?utm_source=github&utm_medium=logo&utm_campaign=github">![EcomDev](http://www.ecomdev.org/wp-content/themes/ecomdev/images/logo.png)</a>
+
 Alternative Url Rewrite Implementation by EcomDev
 =================================================
 * Full support of nested rewrites for categories
