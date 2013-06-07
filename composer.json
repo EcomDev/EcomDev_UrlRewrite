@@ -5,7 +5,7 @@
     "description": "Alternative Url Rewrite Implementation",
     "homepage": "http://shop.ecomdev.org/url-rewrite-indexer.html",
     "require": {
-        "magento-hackathon/magento-composer-installer": "*",
+        "magento-hackathon/magento-composer-installer": "*"
     },
     "require-dev": {
         "ecomdev/mage-ci": "dev-master"
