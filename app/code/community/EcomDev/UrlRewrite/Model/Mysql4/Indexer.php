@@ -1571,7 +1571,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 'IF(rewrite.duplicate_index IS NOT NULL ' 
                     . ' AND SUBSTRING_INDEX(rewrite.duplicate_key, ?, -1) = SUBSTRING_INDEX(request_path.request_path, ?, -1), '
                     . ' rewrite.duplicate_index, '
-                    . ' IF(request_path.request_path REGEXP \'[0-9]$\', 0, NULL))',
+                    . ' IF(request_path.request_path REGEXP \'-[0-9]$\', 0, NULL))',
                 '/'
             )),
             'updated' => new Zend_Db_Expr('1'),
@@ -1593,7 +1593,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         unset($columns['request_path.updated']);
         
         $columns['duplicate_index'] = new Zend_Db_Expr(
-            'IF(request_path.request_path REGEXP \'[0-9]$\', 0, NULL)'
+            'IF(request_path.request_path REGEXP \'-[0-9]$\', 0, NULL)'
         );
         
         $columns = array(
@@ -1682,7 +1682,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
                 'IF(rewrite.duplicate_index IS NOT NULL ' 
                     . ' AND SUBSTRING_INDEX(rewrite.duplicate_key, ?, -1) = SUBSTRING_INDEX(request_path.request_path, ?, -1), '
                     . ' rewrite.duplicate_index, '
-                    . ' IF(request_path.request_path REGEXP \'[0-9]$\', 0, NULL))',
+                    . ' IF(request_path.request_path REGEXP \'-[0-9]$\', 0, NULL))',
                 '/'
             )),
             'target_path' => $targetPathExpr,
@@ -1706,7 +1706,7 @@ class EcomDev_UrlRewrite_Model_Mysql4_Indexer extends Mage_Index_Model_Mysql4_Ab
         unset($columns['request_path.updated']);
         
         $columns['duplicate_index'] = new Zend_Db_Expr(
-            'IF(request_path.request_path REGEXP \'[0-9]$\', 0, NULL)'
+            'IF(request_path.request_path REGEXP \'-[0-9]$\', 0, NULL)'
         );
         
         $columns = array(
